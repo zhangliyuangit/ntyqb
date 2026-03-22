@@ -5,6 +5,9 @@
 .m2/
 backend/target/
 backend/data/
+data/
+data/*.mv.db
+data/*.trace.db
 
 frontend/node_modules/
 frontend/miniprogram/miniprogram_npm/
