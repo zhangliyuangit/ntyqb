@@ -1,7 +1,18 @@
-<view class="page">
-  <view class="card board-hero section">
-    <view class="board-hero-title">球类排行榜</view>
+<view class="page board-page">
+  <view class="board-hero section">
+    <view class="section-kicker">排行榜</view>
+    <view class="board-hero-title">{{currentSportLabel}}</view>
     <view class="board-hero-desc">同分先看胜率，再看净胜值和最近 10 场胜场。少于 3 场会进入暂不入榜区。</view>
+    <view class="board-hero-meta">
+      <view class="board-meta-block">
+        <text class="board-meta-value">{{ranked.length}}</text>
+        <text class="board-meta-label">正式入榜</text>
+      </view>
+      <view class="board-meta-block">
+        <text class="board-meta-value">{{provisional.length}}</text>
+        <text class="board-meta-label">暂不入榜</text>
+      </view>
+    </view>
   </view>
 
   <view class="pill-tabs">
@@ -19,18 +30,45 @@
   <view wx:if="{{loading}}" class="empty">正在拉取排行榜…</view>
 
   <block wx:else>
+    <view wx:if="{{topThree.length > 0}}" class="section">
+      <view class="section-head board-section-head">
+        <view>
+          <view class="section-title">前列球友</view>
+          <view class="section-subtitle">先看手感最热、成绩最稳的几位</view>
+        </view>
+      </view>
+      <view class="podium-list">
+        <view wx:for="{{topThree}}" wx:key="userId" class="podium-card rank-{{item.rank}}" data-user-id="{{item.userId}}" bindtap="openPlayer">
+          <view class="podium-rank">#{{item.rank}}</view>
+          <image wx:if="{{item.avatarUrl}}" class="podium-avatar" src="{{item.avatarUrl}}" mode="aspectFill" />
+          <view wx:else class="podium-avatar placeholder-avatar">{{item.rank}}</view>
+          <view class="podium-name-row">
+            <view class="podium-name">{{item.nickname}}</view>
+            <text wx:if="{{item.tag}}" class="user-tag-badge small">{{item.tag}}</text>
+          </view>
+          <view class="podium-meta">{{item.matches}} 场 · 胜率 {{item.winRate}}%</view>
+          <view class="podium-points">{{item.rankingPoints}} 分</view>
+        </view>
+      </view>
+    </view>
+
     <view class="section">
       <view class="section-head">
-        <view class="section-title">正式榜单</view>
-        <view class="section-subtitle">符合入榜条件的球友</view>
+        <view>
+          <view class="section-title">完整榜单</view>
+          <view class="section-subtitle">继续往下看所有正式入榜成员</view>
+        </view>
       </view>
       <view wx:if="{{ranked.length === 0}}" class="card empty">暂无满足入榜条件的球友</view>
-      <view wx:for="{{ranked}}" wx:key="userId" class="card row" data-user-id="{{item.userId}}" bindtap="openPlayer">
+      <view wx:for="{{ranked}}" wx:key="userId" class="board-row" data-user-id="{{item.userId}}" bindtap="openPlayer">
         <view class="rank">{{item.rank}}</view>
         <image wx:if="{{item.avatarUrl}}" class="avatar" src="{{item.avatarUrl}}" mode="aspectFill" />
         <view wx:else class="avatar placeholder-avatar">{{item.rank}}</view>
         <view class="profile">
-          <view class="name">{{item.nickname}}</view>
+          <view class="name-row">
+            <view class="name">{{item.nickname}}</view>
+            <text wx:if="{{item.tag}}" class="user-tag-badge small">{{item.tag}}</text>
+          </view>
           <view class="meta">{{item.matches}} 场 · 胜率 {{item.winRate}}% · 连胜 {{item.streak}}</view>
         </view>
         <view class="score">
@@ -40,18 +78,23 @@
       </view>
     </view>
 
-    <view class="section">
+    <view class="section provisional-shell">
       <view class="section-head">
-        <view class="section-title">暂不入榜</view>
-        <view class="section-subtitle">少于 3 场已生效比赛会显示在这里</view>
+        <view>
+          <view class="section-title">暂不入榜</view>
+          <view class="section-subtitle">少于 3 场已生效比赛的球友先放在这里</view>
+        </view>
       </view>
       <view wx:if="{{provisional.length === 0}}" class="card empty">没有临时榜成员</view>
-      <view wx:for="{{provisional}}" wx:key="userId" class="card row" data-user-id="{{item.userId}}" bindtap="openPlayer">
+      <view wx:for="{{provisional}}" wx:key="userId" class="board-row muted" data-user-id="{{item.userId}}" bindtap="openPlayer">
         <view class="rank muted-rank">-</view>
         <image wx:if="{{item.avatarUrl}}" class="avatar" src="{{item.avatarUrl}}" mode="aspectFill" />
         <view wx:else class="avatar placeholder-avatar">球</view>
         <view class="profile">
-          <view class="name">{{item.nickname}}</view>
+          <view class="name-row">
+            <view class="name">{{item.nickname}}</view>
+            <text wx:if="{{item.tag}}" class="user-tag-badge small">{{item.tag}}</text>
+          </view>
           <view class="meta">{{item.matches}} 场 · 胜率 {{item.winRate}}%</view>
         </view>
         <view class="score">

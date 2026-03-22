@@ -1,4 +1,4 @@
-<view class="page">
+<view class="page home-page">
   <view wx:if="{{loading}}" class="empty">正在加载球局面板…</view>
 
   <block wx:elif="{{errorMessage}}">
@@ -13,16 +13,32 @@
     <view class="notice section">
       <view class="notice-head">
         <text class="notice-badge">播报</text>
-        <text class="notice-meta">球馆今日份嘴替</text>
+        <text class="notice-meta">{{pendingCount > 0 ? '你有待确认比赛' : '今日球局公告'}}</text>
       </view>
-      <view class="notice-text">{{noticeText}}</view>
+      <view class="notice-text">我说白了，你有啥实力啊？？？</view>
+      <view class="notice-detail">{{homeSummary}}</view>
+    </view>
+
+    <view wx:if="{{latestMatch}}" class="spotlight section">
+      <view class="section-kicker">刚刚结束</view>
+      <view class="spotlight-head">
+        <view>
+          <view class="spotlight-title">{{latestMatch.sportText}}</view>
+          <view class="spotlight-desc">{{latestMatch.teamLine}}</view>
+        </view>
+        <text class="tag muted">{{latestMatch.statusText}}</text>
+      </view>
+      <view class="spotlight-meta">
+        <text class="spotlight-detail">{{latestMatch.detailText}}</text>
+        <text class="spotlight-time">{{latestMatch.timeText}}</text>
+      </view>
     </view>
 
     <view class="section">
       <view class="section-head feed-head">
         <view>
-          <view class="section-title">全部比赛记录</view>
-          <view class="section-subtitle">首页只看大家最近都打了什么球</view>
+          <view class="section-title">最近比赛</view>
+          <view class="section-subtitle">首页先看大家刚刚打完哪些球局</view>
         </view>
         <view class="feed-count">{{matches.length}} 场</view>
       </view>

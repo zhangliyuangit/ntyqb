@@ -1,7 +1,52 @@
+.record-shell {
+  padding: 32rpx 30rpx;
+  border-radius: 34rpx;
+  background:
+    radial-gradient(circle at top right, rgba(7, 193, 96, 0.14), transparent 34%),
+    linear-gradient(160deg, #ffffff 0%, #f3faf6 100%);
+  border: 1rpx solid rgba(223, 236, 228, 0.9);
+}
+
+.record-shell-title {
+  font-size: 40rpx;
+  line-height: 1.24;
+  font-weight: 700;
+  color: #16212f;
+}
+
+.record-shell-desc {
+  margin-top: 12rpx;
+  color: #697684;
+  font-size: 24rpx;
+  line-height: 1.7;
+}
+
+.workflow-strip {
+  display: flex;
+  gap: 12rpx;
+  flex-wrap: wrap;
+}
+
+.workflow-step {
+  padding: 10rpx 18rpx;
+  border-radius: 999rpx;
+  background: rgba(237, 241, 245, 0.95);
+  color: #7f8b99;
+  font-size: 22rpx;
+  font-weight: 600;
+}
+
+.workflow-step.ready {
+  background: rgba(7, 193, 96, 0.12);
+  color: #0f8e4a;
+}
+
 .record-hero {
   background:
     radial-gradient(circle at top right, rgba(7, 193, 96, 0.1), transparent 34%),
     linear-gradient(155deg, #ffffff 0%, #f5fbf7 100%);
+  border-radius: 30rpx;
+  padding: 28rpx;
   border: 1rpx solid rgba(223, 236, 228, 0.9);
 }
 
@@ -19,7 +64,7 @@
 }
 
 .record-hero-title {
-  font-size: 29rpx;
+  font-size: 32rpx;
   font-weight: 700;
   color: #16212f;
 }
@@ -28,6 +73,54 @@
   margin-top: 6rpx;
   color: #6a7785;
   font-size: 23rpx;
+}
+
+.selection-strip {
+  display: flex;
+  gap: 12rpx;
+  flex-wrap: wrap;
+  margin-top: 22rpx;
+}
+
+.selection-pill {
+  padding: 10rpx 16rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, 0.8);
+  color: #476353;
+  font-size: 22rpx;
+  font-weight: 600;
+}
+
+.step-card {
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 28rpx;
+  padding: 26rpx;
+  border: 1rpx solid rgba(229, 235, 241, 0.92);
+  box-shadow: 0 16rpx 36rpx rgba(15, 23, 42, 0.04);
+}
+
+.step-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20rpx;
+  margin-bottom: 18rpx;
+}
+
+.step-index {
+  color: #0f8e4a;
+  font-size: 21rpx;
+  font-weight: 700;
+  letter-spacing: 1rpx;
+  margin-bottom: 8rpx;
+}
+
+.step-note {
+  padding: 10rpx 16rpx;
+  border-radius: 999rpx;
+  background: #f3f6f8;
+  color: #6c7987;
+  font-size: 22rpx;
 }
 
 .section-head {
@@ -121,6 +214,13 @@
 
 .recent-name {
   font-weight: 600;
+}
+
+.recent-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  flex-wrap: wrap;
   margin-bottom: 10rpx;
 }
 
@@ -273,4 +373,21 @@
 
 .textarea-placeholder {
   line-height: 1.6;
+}
+
+.list-toolbar {
+  padding: 8rpx 4rpx 0;
+}
+
+.list-toolbar-title {
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #16212f;
+}
+
+.list-toolbar-desc {
+  margin-top: 10rpx;
+  color: #6f7d8c;
+  font-size: 24rpx;
+  line-height: 1.7;
 }

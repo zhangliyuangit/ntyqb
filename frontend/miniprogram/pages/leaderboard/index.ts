@@ -11,9 +11,11 @@ Page({
       { value: "TABLE_TENNIS", label: "🏓 乒乓球" }
     ],
     activeSport: "BILLIARDS",
+    currentSportLabel: "🎱 台球",
     loading: true,
     ranked: [],
-    provisional: []
+    provisional: [],
+    topThree: []
   },
   onShow() {
     if (!requireAuthPage()) {
@@ -26,9 +28,12 @@ Page({
     this.setData({ activeSport: sportType, loading: true });
     try {
       const response = await getLeaderboard(sportType);
+      const currentSportLabel = this.data.sports.find((item: any) => item.value === sportType)?.label || "球类排行榜";
       this.setData({
+        currentSportLabel,
         ranked: response.ranked,
         provisional: response.provisional,
+        topThree: response.ranked.slice(0, 3),
         loading: false
       });
     } catch (error) {

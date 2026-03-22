@@ -38,17 +38,20 @@ public class MatchService {
     private final UserRepository userRepository;
     private final StatsService statsService;
     private final ObjectMapper objectMapper;
+    private final UserTagService userTagService;
 
     public MatchService(
             MatchRecordRepository matchRecordRepository,
             UserRepository userRepository,
             StatsService statsService,
-            ObjectMapper objectMapper
+            ObjectMapper objectMapper,
+            UserTagService userTagService
     ) {
         this.matchRecordRepository = matchRecordRepository;
         this.userRepository = userRepository;
         this.statsService = statsService;
         this.objectMapper = objectMapper;
+        this.userTagService = userTagService;
     }
 
     @Transactional
@@ -226,6 +229,7 @@ public class MatchService {
                         item.getUser().getId(),
                         item.getUser().getNickname(),
                         item.getUser().getAvatarUrl(),
+                        userTagService.getTag(item.getUser().getId()),
                         item.getSide(),
                         item.getRole(),
                         item.getConfirmState()

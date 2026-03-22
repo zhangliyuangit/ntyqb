@@ -24,7 +24,8 @@ public final class AuthDtos {
             Long id,
             String nickname,
             String avatarUrl,
-            UserStatus status
+            UserStatus status,
+            String tag
     ) {
     }
 

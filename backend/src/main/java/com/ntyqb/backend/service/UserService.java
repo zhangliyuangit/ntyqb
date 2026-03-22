@@ -28,19 +28,22 @@ public class UserService {
     private final AuthService authService;
     private final StatsService statsService;
     private final MatchService matchService;
+    private final UserTagService userTagService;
 
     public UserService(
             UserRepository userRepository,
             MatchRecordRepository matchRecordRepository,
             AuthService authService,
             StatsService statsService,
-            MatchService matchService
+            MatchService matchService,
+            UserTagService userTagService
     ) {
         this.userRepository = userRepository;
         this.matchRecordRepository = matchRecordRepository;
         this.authService = authService;
         this.statsService = statsService;
         this.matchService = matchService;
+        this.userTagService = userTagService;
     }
 
     public List<AuthDtos.UserSummaryDto> searchUsers(String keyword, Long currentUserId) {
@@ -88,6 +91,7 @@ public class UserService {
                         accumulator.user.getId(),
                         accumulator.user.getNickname(),
                         accumulator.user.getAvatarUrl(),
+                        userTagService.getTag(accumulator.user.getId()),
                         accumulator.lastPlayedAt,
                         accumulator.opponentCount,
                         accumulator.teammateCount

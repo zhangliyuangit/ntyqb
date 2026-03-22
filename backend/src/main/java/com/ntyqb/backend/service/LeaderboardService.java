@@ -14,9 +14,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class LeaderboardService {
 
     private final StatsService statsService;
+    private final UserTagService userTagService;
 
-    public LeaderboardService(StatsService statsService) {
+    public LeaderboardService(StatsService statsService, UserTagService userTagService) {
         this.statsService = statsService;
+        this.userTagService = userTagService;
     }
 
     public LeaderboardDtos.LeaderboardResponse getLeaderboard(SportType sportType) {
@@ -48,6 +50,7 @@ public class LeaderboardService {
                 item.getUser().getId(),
                 item.getUser().getNickname(),
                 item.getUser().getAvatarUrl(),
+                userTagService.getTag(item.getUser().getId()),
                 rank,
                 eligible,
                 item.getMatches(),

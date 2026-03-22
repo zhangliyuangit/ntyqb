@@ -44,6 +44,7 @@ public final class MatchDtos {
             Long userId,
             String nickname,
             String avatarUrl,
+            String tag,
             TeamSide side,
             ParticipantRole role,
             ParticipantConfirmState confirmState
@@ -78,6 +79,7 @@ public final class MatchDtos {
             Long id,
             String nickname,
             String avatarUrl,
+            String tag,
             LocalDateTime lastPlayedAt,
             int opponentCount,
             int teammateCount

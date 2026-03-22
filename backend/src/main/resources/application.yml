@@ -25,5 +25,8 @@ app:
   auth:
     mode: mock
     session-days: 14
+  user-tags:
+    by-id:
+      1: VIP
   seed:
     enabled: true

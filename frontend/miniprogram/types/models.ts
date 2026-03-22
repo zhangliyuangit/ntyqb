@@ -8,6 +8,7 @@ export interface UserSummary {
   nickname: string;
   avatarUrl?: string;
   status?: string;
+  tag?: string;
 }
 
 export interface SportStat {
@@ -43,6 +44,7 @@ export interface MatchParticipant {
   userId: number;
   nickname: string;
   avatarUrl?: string;
+  tag?: string;
   side: TeamSide;
   role: string;
   confirmState: string;
@@ -74,6 +76,7 @@ export interface RecentPlayer {
   id: number;
   nickname: string;
   avatarUrl?: string;
+  tag?: string;
   lastPlayedAt?: string;
   opponentCount: number;
   teammateCount: number;
@@ -83,6 +86,7 @@ export interface LeaderboardItem {
   userId: number;
   nickname: string;
   avatarUrl?: string;
+  tag?: string;
   rank: number;
   eligible: boolean;
   matches: number;

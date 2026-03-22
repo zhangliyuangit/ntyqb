@@ -7,7 +7,10 @@
         <image wx:if="{{profile.user.avatarUrl}}" class="player-avatar" src="{{profile.user.avatarUrl}}" mode="aspectFill" />
         <view wx:else class="player-avatar placeholder-avatar">球</view>
         <view>
-          <view class="hero-name">{{profile.user.nickname}}</view>
+          <view class="name-row">
+            <view class="hero-name">{{profile.user.nickname}}</view>
+            <text wx:if="{{profile.user.tag}}" class="user-tag-badge">{{profile.user.tag}}</text>
+          </view>
           <view class="hero-meta">按球类查看他的正式战绩</view>
         </view>
       </view>

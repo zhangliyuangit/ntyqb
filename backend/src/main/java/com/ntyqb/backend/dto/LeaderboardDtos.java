@@ -13,6 +13,7 @@ public final class LeaderboardDtos {
             Long userId,
             String nickname,
             String avatarUrl,
+            String tag,
             int rank,
             boolean eligible,
             int matches,

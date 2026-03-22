@@ -7,31 +7,28 @@
     <text class="tag {{statusClassName}}">{{statusText}}</text>
   </view>
 
-  <view class="teams">
-    <view class="team-row">
+  <view class="versus">
+    <view class="team-block team-a">
       <text class="team-label">A 队</text>
-      <view class="team-main">
-        <text class="team-text">{{teamAText}}</text>
-      </view>
+      <text class="team-text">{{teamAText}}</text>
     </view>
-    <view class="team-row">
+    <view class="versus-divider">VS</view>
+    <view class="team-block team-b">
       <text class="team-label">B 队</text>
-      <view class="team-main">
-        <text class="team-text">{{teamBText}}</text>
-      </view>
+      <text class="team-text">{{teamBText}}</text>
     </view>
   </view>
 
-  <view class="meta-grid">
-    <view class="meta-item highlight">
+  <view class="result-row">
+    <view class="result-block">
       <text class="meta-label">胜方</text>
-      <text class="meta-value winner">{{winnerTextValue}}</text>
+      <text class="result-value">{{winnerTextValue}}</text>
     </view>
-    <view class="meta-item">
+    <view class="meta-inline">
       <text class="meta-label">赛况</text>
       <text class="meta-value">{{detailText}}</text>
     </view>
-    <view class="meta-item">
+    <view class="meta-inline meta-time">
       <text class="meta-label">时间</text>
       <text class="meta-value subtle">{{occurredText}}</text>
     </view>

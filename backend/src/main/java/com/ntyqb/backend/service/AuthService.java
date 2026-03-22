@@ -22,17 +22,20 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final SessionTokenRepository sessionTokenRepository;
+    private final UserTagService userTagService;
     private final String authMode;
     private final int sessionDays;
 
     public AuthService(
             UserRepository userRepository,
             SessionTokenRepository sessionTokenRepository,
+            UserTagService userTagService,
             @Value("${app.auth.mode:mock}") String authMode,
             @Value("${app.auth.session-days:14}") int sessionDays
     ) {
         this.userRepository = userRepository;
         this.sessionTokenRepository = sessionTokenRepository;
+        this.userTagService = userTagService;
         this.authMode = authMode;
         this.sessionDays = sessionDays;
     }
@@ -87,7 +90,13 @@ public class AuthService {
     }
 
     public AuthDtos.UserSummaryDto toUserSummary(User user) {
-        return new AuthDtos.UserSummaryDto(user.getId(), user.getNickname(), user.getAvatarUrl(), user.getStatus());
+        return new AuthDtos.UserSummaryDto(
+                user.getId(),
+                user.getNickname(),
+                user.getAvatarUrl(),
+                user.getStatus(),
+                userTagService.getTag(user.getId())
+        );
     }
 
     private User loginWithMock(AuthDtos.LoginRequest request) {

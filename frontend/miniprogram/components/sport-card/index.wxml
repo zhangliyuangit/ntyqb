@@ -6,26 +6,25 @@
     </view>
     <text class="rate">{{rateText}}</text>
   </view>
-  <view class="grid">
-    <view class="metric">
-      <text class="metric-value">{{stat.wins}}</text>
-      <text class="metric-label">胜</text>
-    </view>
-    <view class="metric">
-      <text class="metric-value">{{stat.losses}}</text>
-      <text class="metric-label">负</text>
-    </view>
-    <view class="metric">
-      <text class="metric-value">{{stat.netValue}}</text>
-      <text class="metric-label">净胜</text>
-    </view>
-    <view class="metric">
-      <text class="metric-value">{{stat.streak}}</text>
-      <text class="metric-label">连胜</text>
-    </view>
+  <view class="record-line">
+    <text class="record-main">{{stat.wins}} 胜 {{stat.losses}} 负</text>
+    <text class="record-note">连胜 {{stat.streak}}</text>
   </view>
-  <view class="footer">
-    <text>积分 {{stat.rankingPoints}}</text>
-    <text>最近 10 场胜 {{stat.recentTenWins}}</text>
+  <view class="rate-track">
+    <view class="rate-fill" style="width: {{rateText}}"></view>
+  </view>
+  <view class="meta-list">
+    <view class="meta-row">
+      <text class="meta-label">积分</text>
+      <text class="meta-value">{{stat.rankingPoints}}</text>
+    </view>
+    <view class="meta-row">
+      <text class="meta-label">净胜</text>
+      <text class="meta-value">{{stat.netValue}}</text>
+    </view>
+    <view class="meta-row">
+      <text class="meta-label">最近 10 场胜</text>
+      <text class="meta-value">{{stat.recentTenWins}}</text>
+    </view>
   </view>
 </view>

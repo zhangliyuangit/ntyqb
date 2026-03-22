@@ -27,8 +27,6 @@ Page({
     winnerSide: "A",
     bestOf: 5,
     winMarginBalls: "",
-    focusWinMargin: false,
-    focusFirstScore: false,
     remark: "",
     searchKeyword: "",
     searchResults: [],
@@ -56,14 +54,22 @@ Page({
     try {
       const me = await getMe();
       const presetSport = wx.getStorageSync("records_prefill_sport") || this.data.activeSport;
+      const presetPanel = wx.getStorageSync("records_default_panel") || this.data.panel;
+      const presetScope = wx.getStorageSync("records_default_scope") || this.data.listScope;
+      const presetStatus = wx.getStorageSync("records_default_status") || this.data.listStatus;
       wx.removeStorageSync("records_prefill_sport");
+      wx.removeStorageSync("records_default_panel");
+      wx.removeStorageSync("records_default_scope");
+      wx.removeStorageSync("records_default_status");
       this.setData({
         myUser: me.user,
         activeSport: presetSport,
+        panel: presetPanel,
+        listScope: presetScope,
+        listStatus: presetStatus,
         teamA: [me.user],
         loading: false
       });
-      this.scheduleScoreFocus();
       await Promise.all([this.loadRecentPlayers(), this.loadMatches()]);
     } catch (error) {
       this.setData({ loading: false });
@@ -93,9 +99,6 @@ Page({
   onPanelTap(event: WechatMiniprogram.BaseEvent) {
     const panel = event.currentTarget.dataset.panel;
     this.setData({ panel });
-    if (panel === "create") {
-      this.scheduleScoreFocus();
-    }
   },
   async onSportTap(event: WechatMiniprogram.BaseEvent) {
     const sportType = event.currentTarget.dataset.sportType;
@@ -114,7 +117,6 @@ Page({
       searchKeyword: "",
       searchResults: []
     });
-    this.scheduleScoreFocus(sportType);
     await Promise.all([this.loadRecentPlayers(), this.loadMatches()]);
   },
   onFormatTap(event: WechatMiniprogram.BaseEvent) {
@@ -125,7 +127,6 @@ Page({
       teamA,
       teamB: []
     });
-    this.scheduleScoreFocus();
   },
   onWinnerTap(event: WechatMiniprogram.BaseEvent) {
     this.setData({ winnerSide: event.currentTarget.dataset.side });
@@ -136,15 +137,6 @@ Page({
   onInput(event: WechatMiniprogram.CustomEvent) {
     const field = event.currentTarget.dataset.field;
     this.setData({ [field]: event.detail.value });
-  },
-  onFormFieldFocus() {
-    if (!this.data.focusWinMargin && !this.data.focusFirstScore) {
-      return;
-    }
-    this.setData({
-      focusWinMargin: false,
-      focusFirstScore: false
-    });
   },
   onSetInput(event: WechatMiniprogram.CustomEvent) {
     const index = Number(event.currentTarget.dataset.index);
@@ -368,31 +360,5 @@ Page({
         { aScore: "", bScore: "" }
       ]
     });
-    this.scheduleScoreFocus();
-  },
-  scheduleScoreFocus(sportType?: string) {
-    const nextSport = sportType || this.data.activeSport;
-    this.setData({
-      focusWinMargin: false,
-      focusFirstScore: false
-    });
-    setTimeout(() => {
-      if (this.data.panel !== "create") {
-        return;
-      }
-      this.setData({
-        focusWinMargin: nextSport === "BILLIARDS",
-        focusFirstScore: nextSport !== "BILLIARDS"
-      });
-      setTimeout(() => {
-        if (!this.data.focusWinMargin && !this.data.focusFirstScore) {
-          return;
-        }
-        this.setData({
-          focusWinMargin: false,
-          focusFirstScore: false
-        });
-      }, 180);
-    }, 80);
   }
 });
