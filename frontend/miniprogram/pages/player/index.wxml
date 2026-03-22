@@ -1,0 +1,30 @@
+<view class="page">
+  <view wx:if="{{loading}}" class="empty">正在加载球友档案…</view>
+
+  <block wx:else>
+    <view class="card player-hero section">
+      <view class="player-top">
+        <image wx:if="{{profile.user.avatarUrl}}" class="player-avatar" src="{{profile.user.avatarUrl}}" mode="aspectFill" />
+        <view wx:else class="player-avatar placeholder-avatar">球</view>
+        <view>
+          <view class="hero-name">{{profile.user.nickname}}</view>
+          <view class="hero-meta">按球类查看他的正式战绩</view>
+        </view>
+      </view>
+    </view>
+
+    <view class="pill-tabs">
+      <view class="pill-tab {{sportType === 'BILLIARDS' ? 'active' : ''}}" data-sport-type="BILLIARDS" bindtap="onSportTap">🎱 台球</view>
+      <view class="pill-tab {{sportType === 'BADMINTON' ? 'active' : ''}}" data-sport-type="BADMINTON" bindtap="onSportTap">🏸 羽毛球</view>
+      <view class="pill-tab {{sportType === 'TABLE_TENNIS' ? 'active' : ''}}" data-sport-type="TABLE_TENNIS" bindtap="onSportTap">🏓 乒乓球</view>
+    </view>
+
+    <sport-card stat="{{profile.stat}}" />
+
+    <view class="section">
+      <view class="section-title">最近比赛</view>
+      <view wx:if="{{profile.recentMatches.length === 0}}" class="card empty">这个球类还没有可展示的比赛</view>
+      <match-card wx:for="{{profile.recentMatches}}" wx:key="id" match="{{item}}" />
+    </view>
+  </block>
+</view>

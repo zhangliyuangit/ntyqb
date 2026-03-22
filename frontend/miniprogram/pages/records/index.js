@@ -1,0 +1,398 @@
+const {
+  cancelMatch,
+  confirmMatch,
+  createMatch,
+  getMe,
+  getRecentPlayers,
+  listMatches,
+  rejectMatch,
+  requireAuthPage,
+  searchUsers
+} = require("../../services/api");
+
+const SPORT_OPTIONS = [
+  { value: "BILLIARDS", label: "🎱 台球" },
+  { value: "BADMINTON", label: "🏸 羽毛球" },
+  { value: "TABLE_TENNIS", label: "🏓 乒乓球" }
+];
+
+Page({
+  data: {
+    loading: true,
+    saving: false,
+    panel: "create",
+    sportOptions: SPORT_OPTIONS,
+    activeSport: "BILLIARDS",
+    format: "SINGLES",
+    winnerSide: "A",
+    bestOf: 5,
+    winMarginBalls: "",
+    focusWinMargin: false,
+    focusFirstScore: false,
+    remark: "",
+    searchKeyword: "",
+    searchResults: [],
+    recentPlayers: [],
+    myUser: null,
+    teamA: [],
+    teamB: [],
+    sets: [
+      { aScore: "", bScore: "" },
+      { aScore: "", bScore: "" }
+    ],
+    listScope: "mine",
+    listStatus: "",
+    matches: []
+  },
+  onShow() {
+    if (!requireAuthPage()) {
+      this.setData({ loading: false });
+      return;
+    }
+    this.bootstrap();
+  },
+  async bootstrap() {
+    this.setData({ loading: true });
+    try {
+      const me = await getMe();
+      const presetSport = wx.getStorageSync("records_prefill_sport") || this.data.activeSport;
+      wx.removeStorageSync("records_prefill_sport");
+      this.setData({
+        myUser: me.user,
+        activeSport: presetSport,
+        teamA: [me.user],
+        loading: false
+      });
+      this.scheduleScoreFocus();
+      await Promise.all([this.loadRecentPlayers(), this.loadMatches()]);
+    } catch (error) {
+      this.setData({ loading: false });
+      wx.showToast({ title: "记录页加载失败", icon: "none" });
+    }
+  },
+  async loadRecentPlayers() {
+    try {
+      const recentPlayers = await getRecentPlayers(this.data.activeSport);
+      this.setData({ recentPlayers });
+    } catch (error) {
+      this.setData({ recentPlayers: [] });
+    }
+  },
+  async loadMatches() {
+    try {
+      const response = await listMatches({
+        scope: this.data.listScope,
+        sportType: this.data.activeSport,
+        status: this.data.listStatus
+      });
+      this.setData({ matches: response.items });
+    } catch (error) {
+      wx.showToast({ title: "记录列表加载失败", icon: "none" });
+    }
+  },
+  onPanelTap(event) {
+    const panel = event.currentTarget.dataset.panel;
+    this.setData({ panel });
+    if (panel === "create") {
+      this.scheduleScoreFocus();
+    }
+  },
+  async onSportTap(event) {
+    const sportType = event.currentTarget.dataset.sportType;
+    this.setData({
+      activeSport: sportType,
+      format: sportType === "BADMINTON" ? this.data.format : "SINGLES",
+      winnerSide: "A",
+      winMarginBalls: "",
+      bestOf: 5,
+      sets: [
+        { aScore: "", bScore: "" },
+        { aScore: "", bScore: "" }
+      ],
+      teamB: [],
+      teamA: this.data.myUser ? [this.data.myUser] : [],
+      searchKeyword: "",
+      searchResults: []
+    });
+    this.scheduleScoreFocus(sportType);
+    await Promise.all([this.loadRecentPlayers(), this.loadMatches()]);
+  },
+  onFormatTap(event) {
+    const format = event.currentTarget.dataset.format;
+    const teamA = this.data.myUser ? [this.data.myUser] : [];
+    this.setData({
+      format,
+      teamA,
+      teamB: []
+    });
+    this.scheduleScoreFocus();
+  },
+  onWinnerTap(event) {
+    this.setData({ winnerSide: event.currentTarget.dataset.side });
+  },
+  onBestOfTap(event) {
+    this.setData({ bestOf: Number(event.currentTarget.dataset.value) });
+  },
+  onInput(event) {
+    const field = event.currentTarget.dataset.field;
+    this.setData({ [field]: event.detail.value });
+  },
+  onFormFieldFocus() {
+    if (!this.data.focusWinMargin && !this.data.focusFirstScore) {
+      return;
+    }
+    this.setData({
+      focusWinMargin: false,
+      focusFirstScore: false
+    });
+  },
+  onSetInput(event) {
+    const index = Number(event.currentTarget.dataset.index);
+    const field = event.currentTarget.dataset.field;
+    const sets = [...this.data.sets];
+    sets[index][field] = event.detail.value;
+    this.setData({ sets });
+  },
+  addSet() {
+    const limit = this.data.activeSport === "TABLE_TENNIS" ? this.data.bestOf : 3;
+    if (this.data.sets.length >= limit) {
+      return;
+    }
+    this.setData({
+      sets: [...this.data.sets, { aScore: "", bScore: "" }]
+    });
+  },
+  removeSet() {
+    if (this.data.sets.length <= 1) {
+      return;
+    }
+    this.setData({
+      sets: this.data.sets.slice(0, -1)
+    });
+  },
+  async onSearchConfirm() {
+    if (!this.data.searchKeyword.trim()) {
+      this.setData({ searchResults: [] });
+      return;
+    }
+    try {
+      const searchResults = await searchUsers(this.data.searchKeyword.trim());
+      this.setData({ searchResults });
+    } catch (error) {
+      wx.showToast({ title: "搜索失败", icon: "none" });
+    }
+  },
+  chooseRecent(event) {
+    const player = this.data.recentPlayers.find((item) => item.id === Number(event.currentTarget.dataset.playerId));
+    if (!player) {
+      return;
+    }
+    this.applyPlayer({
+      id: player.id,
+      nickname: player.nickname,
+      avatarUrl: player.avatarUrl
+    });
+  },
+  chooseSearchResult(event) {
+    const player = this.data.searchResults.find((item) => item.id === Number(event.currentTarget.dataset.playerId));
+    if (!player) {
+      return;
+    }
+    this.applyPlayer(player);
+  },
+  removePlayer(event) {
+    const team = event.currentTarget.dataset.team;
+    const userId = Number(event.currentTarget.dataset.userId);
+    if (team === "teamA") {
+      this.setData({
+        teamA: this.data.teamA.filter((item) => item.id !== userId)
+      });
+      return;
+    }
+    this.setData({
+      teamB: this.data.teamB.filter((item) => item.id !== userId)
+    });
+  },
+  async submitMatch() {
+    try {
+      const payload = this.buildPayload();
+      this.setData({ saving: true });
+      await createMatch(payload);
+      wx.showToast({ title: "已发起，等待确认", icon: "success" });
+      this.resetForm();
+      await this.loadMatches();
+    } catch (error) {
+      wx.showToast({ title: error.message || "提交失败", icon: "none" });
+    } finally {
+      this.setData({ saving: false });
+    }
+  },
+  async onMatchConfirm(event) {
+    try {
+      await confirmMatch(event.detail.matchId);
+      wx.showToast({ title: "已确认", icon: "success" });
+      await this.loadMatches();
+    } catch (error) {
+      wx.showToast({ title: "确认失败", icon: "none" });
+    }
+  },
+  async onMatchReject(event) {
+    try {
+      await rejectMatch(event.detail.matchId);
+      wx.showToast({ title: "已拒绝", icon: "success" });
+      await this.loadMatches();
+    } catch (error) {
+      wx.showToast({ title: "拒绝失败", icon: "none" });
+    }
+  },
+  async onMatchCancel(event) {
+    try {
+      await cancelMatch(event.detail.matchId);
+      wx.showToast({ title: "已取消", icon: "success" });
+      await this.loadMatches();
+    } catch (error) {
+      wx.showToast({ title: "取消失败", icon: "none" });
+    }
+  },
+  async onScopeTap(event) {
+    this.setData({ listScope: event.currentTarget.dataset.scope });
+    await this.loadMatches();
+  },
+  async onStatusTap(event) {
+    const nextStatus = event.currentTarget.dataset.status;
+    this.setData({ listStatus: this.data.listStatus === nextStatus ? "" : nextStatus });
+    await this.loadMatches();
+  },
+  applyPlayer(player) {
+    const teamA = [...this.data.teamA];
+    const teamB = [...this.data.teamB];
+    const allIds = [...teamA, ...teamB].map((item) => item.id);
+    if (allIds.includes(player.id)) {
+      wx.showToast({ title: "已经选过这个球友", icon: "none" });
+      return;
+    }
+
+    const aLimit = this.data.activeSport === "BADMINTON" && this.data.format === "DOUBLES" ? 2 : 1;
+    const bLimit = this.data.activeSport === "BADMINTON" && this.data.format === "DOUBLES" ? 2 : 1;
+
+    if (teamA.length < aLimit) {
+      teamA.push(player);
+      this.setData({ teamA });
+      return;
+    }
+    if (teamB.length < bLimit) {
+      teamB.push(player);
+      this.setData({ teamB });
+      return;
+    }
+    wx.showToast({ title: "参赛人数已满", icon: "none" });
+  },
+  buildPayload() {
+    if (!this.data.myUser) {
+      throw new Error("当前用户未加载完成");
+    }
+    const teamAIds = this.data.teamA.map((item) => item.id);
+    const teamBIds = this.data.teamB.map((item) => item.id);
+    if (!teamBIds.length) {
+      throw new Error("请先选择对手");
+    }
+    if (this.data.activeSport === "BADMINTON" && this.data.format === "DOUBLES" && (teamAIds.length !== 2 || teamBIds.length !== 2)) {
+      throw new Error("羽毛球双打必须补齐 4 人");
+    }
+    if (this.data.activeSport !== "BADMINTON" && (teamAIds.length !== 1 || teamBIds.length !== 1)) {
+      throw new Error("当前项目仅支持 1v1");
+    }
+
+    if (this.data.activeSport === "BILLIARDS") {
+      const winMarginText = `${this.data.winMarginBalls}`.trim();
+      if (winMarginText === "") {
+        throw new Error("请填写台球净胜球");
+      }
+      return {
+        sportType: this.data.activeSport,
+        format: "SINGLES",
+        winnerSide: this.data.winnerSide,
+        participantIdsA: teamAIds,
+        participantIdsB: teamBIds,
+        winMarginBalls: Number(winMarginText),
+        remark: this.data.remark
+      };
+    }
+
+    const sets = this.data.sets
+      .filter((item) => item.aScore !== "" && item.bScore !== "")
+      .map((item) => ({
+        aScore: Number(item.aScore),
+        bScore: Number(item.bScore)
+      }));
+    if (!sets.length) {
+      throw new Error("请至少填写一局比分");
+    }
+
+    if (this.data.activeSport === "TABLE_TENNIS") {
+      return {
+        sportType: this.data.activeSport,
+        format: "SINGLES",
+        winnerSide: this.data.winnerSide,
+        participantIdsA: teamAIds,
+        participantIdsB: teamBIds,
+        bestOf: Number(this.data.bestOf),
+        sets,
+        remark: this.data.remark
+      };
+    }
+
+    return {
+      sportType: this.data.activeSport,
+      format: this.data.format,
+      winnerSide: this.data.winnerSide,
+      participantIdsA: teamAIds,
+      participantIdsB: teamBIds,
+      sets,
+      remark: this.data.remark
+    };
+  },
+  resetForm() {
+    this.setData({
+      format: this.data.activeSport === "BADMINTON" ? this.data.format : "SINGLES",
+      winnerSide: "A",
+      bestOf: 5,
+      winMarginBalls: "",
+      remark: "",
+      teamA: this.data.myUser ? [this.data.myUser] : [],
+      teamB: [],
+      searchKeyword: "",
+      searchResults: [],
+      sets: [
+        { aScore: "", bScore: "" },
+        { aScore: "", bScore: "" }
+      ]
+    });
+    this.scheduleScoreFocus();
+  },
+  scheduleScoreFocus(sportType) {
+    const nextSport = sportType || this.data.activeSport;
+    this.setData({
+      focusWinMargin: false,
+      focusFirstScore: false
+    });
+    setTimeout(() => {
+      if (this.data.panel !== "create") {
+        return;
+      }
+      this.setData({
+        focusWinMargin: nextSport === "BILLIARDS",
+        focusFirstScore: nextSport !== "BILLIARDS"
+      });
+      setTimeout(() => {
+        if (!this.data.focusWinMargin && !this.data.focusFirstScore) {
+          return;
+        }
+        this.setData({
+          focusWinMargin: false,
+          focusFirstScore: false
+        });
+      }, 180);
+    }, 80);
+  }
+});

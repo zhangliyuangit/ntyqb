@@ -1,0 +1,29 @@
+.player-hero {
+  background:
+    radial-gradient(circle at top right, rgba(7, 193, 96, 0.12), transparent 34%),
+    linear-gradient(155deg, #ffffff 0%, #f2faf6 100%);
+}
+
+.player-top {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+}
+
+.player-avatar {
+  width: 108rpx;
+  height: 108rpx;
+  border-radius: 28rpx;
+  border: 6rpx solid rgba(7, 193, 96, 0.12);
+}
+
+.hero-name {
+  font-size: 38rpx;
+  font-weight: 700;
+  margin-bottom: 8rpx;
+}
+
+.hero-meta {
+  color: #7f8b99;
+  font-size: 24rpx;
+}

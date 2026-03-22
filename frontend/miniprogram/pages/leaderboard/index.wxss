@@ -1,0 +1,86 @@
+.board-hero {
+  background:
+    radial-gradient(circle at top right, rgba(7, 193, 96, 0.12), transparent 34%),
+    linear-gradient(155deg, #ffffff 0%, #f1faf5 100%);
+}
+
+.board-hero-title {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #16212f;
+}
+
+.board-hero-desc {
+  margin-top: 12rpx;
+  font-size: 24rpx;
+  line-height: 1.7;
+  color: #6d7887;
+}
+
+.section-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20rpx;
+  margin-bottom: 18rpx;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 18rpx;
+  margin-bottom: 16rpx;
+}
+
+.rank {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 18rpx;
+  background: linear-gradient(160deg, #e9f9ef 0%, #d9f4e5 100%);
+  color: #07c160;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+}
+
+.muted-rank {
+  background: #eef2f5;
+  color: #8d98a7;
+}
+
+.avatar {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 22rpx;
+}
+
+.profile {
+  flex: 1;
+}
+
+.name {
+  font-weight: 600;
+  margin-bottom: 8rpx;
+}
+
+.meta {
+  font-size: 24rpx;
+  color: #6d7887;
+}
+
+.score {
+  text-align: right;
+}
+
+.score-value {
+  display: block;
+  font-size: 36rpx;
+  font-weight: 700;
+}
+
+.score-label {
+  display: block;
+  font-size: 22rpx;
+  color: #7f8b99;
+}

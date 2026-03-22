@@ -1,0 +1,276 @@
+.record-hero {
+  background:
+    radial-gradient(circle at top right, rgba(7, 193, 96, 0.1), transparent 34%),
+    linear-gradient(155deg, #ffffff 0%, #f5fbf7 100%);
+  border: 1rpx solid rgba(223, 236, 228, 0.9);
+}
+
+.record-hero-user {
+  display: flex;
+  align-items: center;
+  gap: 18rpx;
+}
+
+.record-avatar {
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 26rpx;
+  border: 6rpx solid rgba(7, 193, 96, 0.12);
+}
+
+.record-hero-title {
+  font-size: 29rpx;
+  font-weight: 700;
+  color: #16212f;
+}
+
+.record-hero-desc {
+  margin-top: 6rpx;
+  color: #6a7785;
+  font-size: 23rpx;
+}
+
+.section-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20rpx;
+  margin-bottom: 18rpx;
+}
+
+.helper {
+  color: #7f8b99;
+  font-size: 23rpx;
+  margin-bottom: 20rpx;
+  line-height: 1.6;
+}
+
+.sub-block {
+  margin-top: 20rpx;
+}
+
+.sub-title {
+  margin-bottom: 14rpx;
+  font-size: 25rpx;
+  font-weight: 600;
+}
+
+.team-block {
+  margin-bottom: 18rpx;
+}
+
+.team-title {
+  font-size: 24rpx;
+  color: #617080;
+  margin-bottom: 10rpx;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  min-height: 64rpx;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 10rpx;
+  padding: 12rpx 18rpx;
+  border-radius: 999rpx;
+  background: linear-gradient(180deg, #eff8f3 0%, #ebf6ef 100%);
+  color: #156d3b;
+  font-size: 24rpx;
+  border: 1rpx solid rgba(207, 234, 217, 0.95);
+}
+
+.chip-avatar {
+  width: 34rpx;
+  height: 34rpx;
+  border-radius: 50%;
+}
+
+.chip-remove {
+  font-size: 26rpx;
+}
+
+.recent-scroll {
+  white-space: nowrap;
+  margin-bottom: 20rpx;
+}
+
+.recent-card {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 220rpx;
+  background: linear-gradient(180deg, #fbfcfd 0%, #f6faf8 100%);
+  border-radius: 20rpx;
+  padding: 18rpx;
+  margin-right: 14rpx;
+  box-sizing: border-box;
+  border: 1rpx solid rgba(230, 236, 242, 0.95);
+}
+
+.recent-avatar {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 18rpx;
+  margin-bottom: 12rpx;
+}
+
+.recent-name {
+  font-weight: 600;
+  margin-bottom: 10rpx;
+}
+
+.recent-meta {
+  font-size: 22rpx;
+  color: #7f8b99;
+}
+
+.search-box {
+  display: flex;
+  gap: 12rpx;
+  align-items: center;
+}
+
+.search-input,
+.input {
+  flex: 1;
+  min-height: 76rpx;
+  background: #f7f9fc;
+  border-radius: 18rpx;
+  padding: 0 22rpx;
+  box-sizing: border-box;
+  border: 1rpx solid rgba(228, 234, 240, 0.95);
+  font-size: 26rpx;
+  color: #16212f;
+}
+
+.search-btn {
+  margin: 0;
+  height: 68rpx;
+  line-height: 68rpx;
+  padding: 0 28rpx;
+}
+
+.search-results {
+  margin-top: 16rpx;
+  border-top: 1rpx solid #edf1f5;
+}
+
+.search-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20rpx 2rpx;
+  border-bottom: 1rpx solid #edf1f5;
+}
+
+.search-user {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.search-avatar {
+  width: 40rpx;
+  height: 40rpx;
+  border-radius: 50%;
+}
+
+.search-plus {
+  color: #07c160;
+}
+
+.field {
+  margin-bottom: 18rpx;
+}
+
+.label {
+  margin-bottom: 12rpx;
+  color: #617080;
+  font-size: 23rpx;
+}
+
+.textarea {
+  width: 100%;
+  min-height: 168rpx;
+  background: #f7f9fc;
+  border-radius: 18rpx;
+  padding: 18rpx 22rpx;
+  box-sizing: border-box;
+  border: 1rpx solid rgba(228, 234, 240, 0.95);
+  font-size: 26rpx;
+  color: #16212f;
+  line-height: 1.6;
+}
+
+.set-row {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin-bottom: 16rpx;
+  padding: 16rpx 18rpx;
+  border-radius: 18rpx;
+  background: #f9fbfd;
+  border: 1rpx solid rgba(231, 236, 242, 0.9);
+}
+
+.set-label {
+  width: 110rpx;
+  color: #617080;
+  font-size: 23rpx;
+}
+
+.score-input {
+  width: 160rpx;
+  min-height: 72rpx;
+  background: #ffffff;
+  border-radius: 16rpx;
+  text-align: center;
+  border: 1rpx solid rgba(228, 234, 240, 0.95);
+  font-size: 26rpx;
+  color: #16212f;
+}
+
+.colon {
+  color: #7f8b99;
+  font-size: 28rpx;
+  font-weight: 600;
+}
+
+.set-actions {
+  display: flex;
+  gap: 12rpx;
+  margin-bottom: 20rpx;
+}
+
+.mini-btn {
+  margin: 0;
+}
+
+.submit-btn {
+  width: 100%;
+  margin-top: 10rpx;
+  min-height: 80rpx;
+  font-size: 26rpx;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.field-placeholder {
+  font-size: 22rpx;
+  color: #a0acb8;
+}
+
+.score-placeholder {
+  text-align: center;
+}
+
+.textarea-placeholder {
+  line-height: 1.6;
+}

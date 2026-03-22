@@ -1,0 +1,7 @@
+{
+  "navigationBarTitleText": "球友战绩",
+  "usingComponents": {
+    "sport-card": "../../components/sport-card/index",
+    "match-card": "../../components/match-card/index"
+  }
+}

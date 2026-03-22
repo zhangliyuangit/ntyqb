@@ -1,0 +1,48 @@
+<view class="page">
+  <view wx:if="{{loading}}" class="empty">正在载入我的球馆数据…</view>
+
+  <block wx:else>
+    <view class="card profile-card section">
+      <view class="profile-top">
+        <view class="profile-main">
+          <image wx:if="{{me.avatarUrl}}" class="profile-avatar" src="{{me.avatarUrl}}" mode="aspectFill" />
+          <view wx:else class="profile-avatar placeholder-avatar">球</view>
+          <view>
+            <view class="name">{{me.nickname}}</view>
+            <view class="meta">朋友小圈子战绩看板</view>
+          </view>
+        </view>
+        <button class="button-ghost logout-btn" size="mini" bindtap="onLogout">退出登录</button>
+      </view>
+
+      <view class="profile-note">
+        这里只展示已经确认生效的比赛结果，你发起但尚未被确认的比赛不会进入这里的正式统计。
+      </view>
+    </view>
+
+    <view class="section">
+      <view class="section-head">
+        <view class="section-title">胜率</view>
+        <view class="section-toggle" bindtap="onToggleStats">{{statsCollapsed ? '展开' : '收起'}}</view>
+      </view>
+      <view wx:if="{{!statsCollapsed}}" class="stats-list">
+        <sport-card wx:for="{{stats}}" wx:key="sportType" stat="{{item}}" />
+      </view>
+      <view wx:else class="card fold-note">已收起球类胜率概览</view>
+    </view>
+
+    <view class="section">
+      <view class="section-head">
+        <view class="section-title">详细战绩</view>
+        <view class="section-subtitle">只展示已生效记录</view>
+      </view>
+      <view class="pill-tabs">
+        <view class="pill-tab {{activeSport === 'BILLIARDS' ? 'active' : ''}}" data-sport-type="BILLIARDS" bindtap="onSportTap">🎱 台球</view>
+        <view class="pill-tab {{activeSport === 'BADMINTON' ? 'active' : ''}}" data-sport-type="BADMINTON" bindtap="onSportTap">🏸 羽毛球</view>
+        <view class="pill-tab {{activeSport === 'TABLE_TENNIS' ? 'active' : ''}}" data-sport-type="TABLE_TENNIS" bindtap="onSportTap">🏓 乒乓球</view>
+      </view>
+      <view wx:if="{{matches.length === 0}}" class="card empty">这个球类还没有已生效记录</view>
+      <match-card wx:for="{{matches}}" wx:key="id" match="{{item}}" compact="{{true}}" />
+    </view>
+  </block>
+</view>

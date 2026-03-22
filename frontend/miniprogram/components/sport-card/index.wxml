@@ -1,0 +1,31 @@
+<view class="sport-card">
+  <view class="header">
+    <view>
+      <text class="title">{{title}}</text>
+      <view class="matches">{{stat.matches}} 场已生效比赛</view>
+    </view>
+    <text class="rate">{{rateText}}</text>
+  </view>
+  <view class="grid">
+    <view class="metric">
+      <text class="metric-value">{{stat.wins}}</text>
+      <text class="metric-label">胜</text>
+    </view>
+    <view class="metric">
+      <text class="metric-value">{{stat.losses}}</text>
+      <text class="metric-label">负</text>
+    </view>
+    <view class="metric">
+      <text class="metric-value">{{stat.netValue}}</text>
+      <text class="metric-label">净胜</text>
+    </view>
+    <view class="metric">
+      <text class="metric-value">{{stat.streak}}</text>
+      <text class="metric-label">连胜</text>
+    </view>
+  </view>
+  <view class="footer">
+    <text>积分 {{stat.rankingPoints}}</text>
+    <text>最近 10 场胜 {{stat.recentTenWins}}</text>
+  </view>
+</view>

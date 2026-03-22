@@ -1,0 +1,64 @@
+<view class="page">
+  <view class="card board-hero section">
+    <view class="board-hero-title">球类排行榜</view>
+    <view class="board-hero-desc">同分先看胜率，再看净胜值和最近 10 场胜场。少于 3 场会进入暂不入榜区。</view>
+  </view>
+
+  <view class="pill-tabs">
+    <view
+      wx:for="{{sports}}"
+      wx:key="value"
+      class="pill-tab {{activeSport === item.value ? 'active' : ''}}"
+      data-sport-type="{{item.value}}"
+      bindtap="onSportTap"
+    >
+      {{item.label}}
+    </view>
+  </view>
+
+  <view wx:if="{{loading}}" class="empty">正在拉取排行榜…</view>
+
+  <block wx:else>
+    <view class="section">
+      <view class="section-head">
+        <view class="section-title">正式榜单</view>
+        <view class="section-subtitle">符合入榜条件的球友</view>
+      </view>
+      <view wx:if="{{ranked.length === 0}}" class="card empty">暂无满足入榜条件的球友</view>
+      <view wx:for="{{ranked}}" wx:key="userId" class="card row" data-user-id="{{item.userId}}" bindtap="openPlayer">
+        <view class="rank">{{item.rank}}</view>
+        <image wx:if="{{item.avatarUrl}}" class="avatar" src="{{item.avatarUrl}}" mode="aspectFill" />
+        <view wx:else class="avatar placeholder-avatar">{{item.rank}}</view>
+        <view class="profile">
+          <view class="name">{{item.nickname}}</view>
+          <view class="meta">{{item.matches}} 场 · 胜率 {{item.winRate}}% · 连胜 {{item.streak}}</view>
+        </view>
+        <view class="score">
+          <text class="score-value">{{item.rankingPoints}}</text>
+          <text class="score-label">积分</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="section">
+      <view class="section-head">
+        <view class="section-title">暂不入榜</view>
+        <view class="section-subtitle">少于 3 场已生效比赛会显示在这里</view>
+      </view>
+      <view wx:if="{{provisional.length === 0}}" class="card empty">没有临时榜成员</view>
+      <view wx:for="{{provisional}}" wx:key="userId" class="card row" data-user-id="{{item.userId}}" bindtap="openPlayer">
+        <view class="rank muted-rank">-</view>
+        <image wx:if="{{item.avatarUrl}}" class="avatar" src="{{item.avatarUrl}}" mode="aspectFill" />
+        <view wx:else class="avatar placeholder-avatar">球</view>
+        <view class="profile">
+          <view class="name">{{item.nickname}}</view>
+          <view class="meta">{{item.matches}} 场 · 胜率 {{item.winRate}}%</view>
+        </view>
+        <view class="score">
+          <text class="score-value">{{item.netValue}}</text>
+          <text class="score-label">净胜</text>
+        </view>
+      </view>
+    </view>
+  </block>
+</view>

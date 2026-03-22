@@ -1,0 +1,45 @@
+<view class="match-card {{compact ? 'compact' : ''}}" bindtap="onTapCard">
+  <view class="header">
+    <view class="header-left">
+      <text class="sport">{{sportText}}</text>
+      <text class="format">{{formatText}}</text>
+    </view>
+    <text class="tag {{statusClassName}}">{{statusText}}</text>
+  </view>
+
+  <view class="teams">
+    <view class="team-row">
+      <text class="team-label">A 队</text>
+      <view class="team-main">
+        <text class="team-text">{{teamAText}}</text>
+      </view>
+    </view>
+    <view class="team-row">
+      <text class="team-label">B 队</text>
+      <view class="team-main">
+        <text class="team-text">{{teamBText}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="meta-grid">
+    <view class="meta-item highlight">
+      <text class="meta-label">胜方</text>
+      <text class="meta-value winner">{{winnerTextValue}}</text>
+    </view>
+    <view class="meta-item">
+      <text class="meta-label">赛况</text>
+      <text class="meta-value">{{detailText}}</text>
+    </view>
+    <view class="meta-item">
+      <text class="meta-label">时间</text>
+      <text class="meta-value subtle">{{occurredText}}</text>
+    </view>
+  </view>
+
+  <view class="actions" catchtap="noop">
+    <button wx:if="{{match.canConfirm}}" class="button-primary action-btn" size="mini" bindtap="onConfirmTap">确认</button>
+    <button wx:if="{{match.canReject}}" class="button-warn action-btn" size="mini" bindtap="onRejectTap">拒绝</button>
+    <button wx:if="{{match.canCancel}}" class="button-ghost action-btn" size="mini" bindtap="onCancelTap">取消</button>
+  </view>
+</view>

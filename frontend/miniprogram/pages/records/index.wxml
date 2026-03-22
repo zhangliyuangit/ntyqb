@@ -1,0 +1,176 @@
+<view class="page">
+  <view class="pill-tabs">
+    <view class="pill-tab {{panel === 'create' ? 'active' : ''}}" data-panel="create" bindtap="onPanelTap">发起记录</view>
+    <view class="pill-tab {{panel === 'list' ? 'active' : ''}}" data-panel="list" bindtap="onPanelTap">记录列表</view>
+  </view>
+
+  <view wx:if="{{loading}}" class="empty">正在整理比赛记录…</view>
+
+  <block wx:else>
+    <view wx:if="{{panel === 'create'}}" class="section">
+      <view class="card record-hero section">
+        <view class="record-hero-top">
+          <view class="record-hero-user">
+            <image wx:if="{{myUser.avatarUrl}}" class="record-avatar" src="{{myUser.avatarUrl}}" mode="aspectFill" />
+            <view wx:else class="record-avatar placeholder-avatar">球</view>
+            <view>
+              <view class="record-hero-title">{{myUser.nickname}}，发起一场新球局</view>
+              <view class="record-hero-desc">先选球类和参赛者，提交后等待对手确认。</view>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <view class="card section">
+        <view class="section-head">
+          <view class="section-title">步骤 1 · 选择球类</view>
+        </view>
+        <view class="pill-tabs">
+          <view wx:for="{{sportOptions}}" wx:key="value" class="pill-tab {{activeSport === item.value ? 'active' : ''}}" data-sport-type="{{item.value}}" bindtap="onSportTap">{{item.label}}</view>
+        </view>
+
+        <view wx:if="{{activeSport === 'BADMINTON'}}" class="sub-block">
+          <view class="sub-title">赛制</view>
+          <view class="pill-tabs">
+            <view class="pill-tab {{format === 'SINGLES' ? 'active' : ''}}" data-format="SINGLES" bindtap="onFormatTap">单打</view>
+            <view class="pill-tab {{format === 'DOUBLES' ? 'active' : ''}}" data-format="DOUBLES" bindtap="onFormatTap">双打</view>
+          </view>
+        </view>
+
+        <view class="sub-block">
+          <view class="sub-title">胜方</view>
+          <view class="pill-tabs">
+            <view class="pill-tab {{winnerSide === 'A' ? 'active' : ''}}" data-side="A" bindtap="onWinnerTap">我方胜</view>
+            <view class="pill-tab {{winnerSide === 'B' ? 'active' : ''}}" data-side="B" bindtap="onWinnerTap">对方胜</view>
+          </view>
+        </view>
+      </view>
+
+      <view class="card section">
+        <view class="section-head">
+          <view class="section-title">步骤 2 · 选择参赛者</view>
+        </view>
+        <view class="helper">默认把自己放在我方。双打会先补我方搭档，再补对方队友。</view>
+
+        <view class="team-block">
+          <view class="team-title">我方</view>
+          <view class="chips">
+            <view wx:for="{{teamA}}" wx:key="id" class="chip">
+              <image wx:if="{{item.avatarUrl}}" class="chip-avatar" src="{{item.avatarUrl}}" mode="aspectFill" />
+              <view wx:else class="chip-avatar placeholder-avatar small-avatar">球</view>
+              <text>{{item.nickname}}</text>
+              <text wx:if="{{item.id !== myUser.id}}" class="chip-remove" data-team="teamA" data-user-id="{{item.id}}" bindtap="removePlayer">×</text>
+            </view>
+          </view>
+        </view>
+
+        <view class="team-block">
+          <view class="team-title">对方</view>
+          <view class="chips">
+            <view wx:for="{{teamB}}" wx:key="id" class="chip">
+              <image wx:if="{{item.avatarUrl}}" class="chip-avatar" src="{{item.avatarUrl}}" mode="aspectFill" />
+              <view wx:else class="chip-avatar placeholder-avatar small-avatar">球</view>
+              <text>{{item.nickname}}</text>
+              <text class="chip-remove" data-team="teamB" data-user-id="{{item.id}}" bindtap="removePlayer">×</text>
+            </view>
+          </view>
+        </view>
+
+        <view class="sub-title">最近对手 / 队友</view>
+        <scroll-view scroll-x class="recent-scroll">
+          <view wx:for="{{recentPlayers}}" wx:key="id" class="recent-card" data-player-id="{{item.id}}" bindtap="chooseRecent">
+            <image wx:if="{{item.avatarUrl}}" class="recent-avatar" src="{{item.avatarUrl}}" mode="aspectFill" />
+            <view wx:else class="recent-avatar placeholder-avatar">球</view>
+            <text class="recent-name">{{item.nickname}}</text>
+            <text class="recent-meta">对手 {{item.opponentCount}} · 队友 {{item.teammateCount}}</text>
+          </view>
+        </scroll-view>
+
+        <view class="search-box">
+          <input class="search-input" placeholder="搜索球友昵称" placeholder-class="field-placeholder" value="{{searchKeyword}}" data-field="searchKeyword" bindinput="onInput" confirm-type="search" bindconfirm="onSearchConfirm" />
+          <button class="button-ghost search-btn" size="mini" bindtap="onSearchConfirm">搜索</button>
+        </view>
+
+        <view wx:if="{{searchResults.length > 0}}" class="search-results">
+          <view wx:for="{{searchResults}}" wx:key="id" class="search-row" data-player-id="{{item.id}}" bindtap="chooseSearchResult">
+            <view class="search-user">
+              <image wx:if="{{item.avatarUrl}}" class="search-avatar" src="{{item.avatarUrl}}" mode="aspectFill" />
+              <view wx:else class="search-avatar placeholder-avatar small-avatar">球</view>
+              <text>{{item.nickname}}</text>
+            </view>
+            <text class="search-plus">添加</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="card section">
+        <view class="section-head">
+          <view class="section-title">步骤 3 · 填写比分</view>
+        </view>
+
+        <view wx:if="{{activeSport === 'BILLIARDS'}}" class="field">
+          <view class="label">净胜球数（可填 0）</view>
+          <input class="input" type="number" focus="{{focusWinMargin}}" cursor-spacing="24" placeholder="填净胜球，如 0 或 3" placeholder-class="field-placeholder" value="{{winMarginBalls}}" data-field="winMarginBalls" bindinput="onInput" bindfocus="onFormFieldFocus" />
+        </view>
+
+        <block wx:else>
+          <view wx:if="{{activeSport === 'TABLE_TENNIS'}}" class="sub-block">
+            <view class="sub-title">局制</view>
+            <view class="pill-tabs">
+              <view class="pill-tab {{bestOf === 3 ? 'active' : ''}}" data-value="3" bindtap="onBestOfTap">3 局</view>
+              <view class="pill-tab {{bestOf === 5 ? 'active' : ''}}" data-value="5" bindtap="onBestOfTap">5 局</view>
+              <view class="pill-tab {{bestOf === 7 ? 'active' : ''}}" data-value="7" bindtap="onBestOfTap">7 局</view>
+            </view>
+          </view>
+
+          <view wx:for="{{sets}}" wx:key="index" class="set-row">
+            <text class="set-label">第 {{index + 1}} 局</text>
+            <input class="score-input" type="number" focus="{{index === 0 && focusFirstScore}}" cursor-spacing="24" placeholder="我方分" placeholder-class="field-placeholder score-placeholder" data-index="{{index}}" data-field="aScore" value="{{item.aScore}}" bindinput="onSetInput" bindfocus="onFormFieldFocus" />
+            <text class="colon">:</text>
+            <input class="score-input" type="number" cursor-spacing="24" placeholder="对方分" placeholder-class="field-placeholder score-placeholder" data-index="{{index}}" data-field="bScore" value="{{item.bScore}}" bindinput="onSetInput" bindfocus="onFormFieldFocus" />
+          </view>
+
+          <view class="set-actions">
+            <button class="button-ghost mini-btn" size="mini" bindtap="addSet">加一局</button>
+            <button class="button-ghost mini-btn" size="mini" bindtap="removeSet">减一局</button>
+          </view>
+        </block>
+
+        <view class="field">
+          <view class="label">备注</view>
+          <textarea class="textarea" placeholder="补充亮点、赛况等（选填）" placeholder-class="field-placeholder textarea-placeholder" value="{{remark}}" data-field="remark" bindinput="onInput" />
+        </view>
+
+        <button class="button-primary submit-btn" loading="{{saving}}" bindtap="submitMatch">提交并发起确认</button>
+      </view>
+    </view>
+
+    <view wx:else class="section">
+      <view class="card section">
+        <view class="section-head">
+          <view class="section-title">记录筛选</view>
+        </view>
+        <view class="pill-tabs">
+          <view class="pill-tab {{listScope === 'mine' ? 'active' : ''}}" data-scope="mine" bindtap="onScopeTap">我的全部</view>
+          <view class="pill-tab {{listScope === 'pending_confirmation' ? 'active' : ''}}" data-scope="pending_confirmation" bindtap="onScopeTap">待我确认</view>
+          <view class="pill-tab {{listScope === 'initiated' ? 'active' : ''}}" data-scope="initiated" bindtap="onScopeTap">我发起的</view>
+        </view>
+        <view class="pill-tabs">
+          <view class="pill-tab {{listStatus === 'PENDING' ? 'active' : ''}}" data-status="PENDING" bindtap="onStatusTap">待确认</view>
+          <view class="pill-tab {{listStatus === 'CONFIRMED' ? 'active' : ''}}" data-status="CONFIRMED" bindtap="onStatusTap">已生效</view>
+          <view class="pill-tab {{listStatus === 'REJECTED' ? 'active' : ''}}" data-status="REJECTED" bindtap="onStatusTap">被拒绝</view>
+        </view>
+      </view>
+
+      <view wx:if="{{matches.length === 0}}" class="card empty">暂时没有符合条件的记录</view>
+      <match-card
+        wx:for="{{matches}}"
+        wx:key="id"
+        match="{{item}}"
+        bindconfirm="onMatchConfirm"
+        bindreject="onMatchReject"
+        bindcancel="onMatchCancel"
+      />
+    </view>
+  </block>
+</view>

@@ -1,0 +1,63 @@
+<view class="auth-page">
+  <view class="brand-panel">
+    <view class="brand-mark">
+      <view class="brand-ball ball-one"></view>
+      <view class="brand-ball ball-two"></view>
+      <view class="brand-ball ball-three"></view>
+    </view>
+    <view class="brand-copy">
+      <view class="brand-title">你挺有球呗</view>
+      <view class="brand-subtitle">朋友小圈子的对战记录与排行榜</view>
+    </view>
+  </view>
+
+  <view class="auth-card">
+    <view class="auth-head">
+      <view class="auth-title">微信授权登录</view>
+      <view class="auth-desc">{{isFirstAuth ? '首次授权后会固定这份头像和昵称，后续登录直接复用。' : '继续使用上次确认过的微信资料登录。'}}</view>
+    </view>
+
+    <block wx:if="{{isFirstAuth}}">
+      <button class="avatar-picker" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">
+        <image wx:if="{{avatarUrl}}" class="avatar-image" src="{{avatarUrl}}" mode="aspectFill" />
+        <view wx:else class="avatar-empty">
+          <view class="avatar-empty-title">选择微信头像</view>
+          <view class="avatar-empty-sub">点击完成头像授权</view>
+        </view>
+      </button>
+
+      <view class="field-block">
+        <view class="field-label">微信昵称</view>
+        <input
+          class="nickname-input"
+          type="text"
+          maxlength="20"
+          placeholder="请输入昵称"
+          value="{{nickname}}"
+          bindinput="onNicknameInput"
+          bindblur="onNicknameInput"
+        />
+      </view>
+    </block>
+
+    <block wx:else>
+      <view class="saved-profile">
+        <image class="saved-avatar" src="{{savedProfile.avatarUrl}}" mode="aspectFill" />
+        <view class="saved-copy">
+          <view class="saved-name">{{savedProfile.nickname}}</view>
+          <view class="saved-desc">使用这份资料继续登录，不会重复要求填写。</view>
+        </view>
+      </view>
+    </block>
+
+    <view wx:if="{{errorMessage}}" class="error-panel">{{errorMessage}}</view>
+
+    <button class="button-primary auth-button" loading="{{loading}}" disabled="{{loading}}" bindtap="onSubmit">
+      <text class="auth-button-text">{{isFirstAuth ? '微信授权进入' : '继续使用微信登录'}}</text>
+    </button>
+
+    <button wx:if="{{!isFirstAuth}}" class="button-ghost reset-button" bindtap="onResetProfile">
+      重新填写头像和昵称
+    </button>
+  </view>
+</view>

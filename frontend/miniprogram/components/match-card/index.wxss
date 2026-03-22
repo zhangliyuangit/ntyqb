@@ -1,0 +1,192 @@
+.match-card {
+  background: #ffffff;
+  border-radius: 24rpx;
+  padding: 24rpx 24rpx 22rpx;
+  box-shadow: 0 12rpx 32rpx rgba(15, 23, 42, 0.05);
+  margin-bottom: 20rpx;
+  border: 1rpx solid rgba(228, 235, 242, 0.9);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16rpx;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  min-width: 0;
+}
+
+.sport {
+  font-weight: 700;
+  font-size: 32rpx;
+  color: #16212f;
+}
+
+.format {
+  font-size: 21rpx;
+  color: #607080;
+  background: #f2f5f8;
+  padding: 8rpx 14rpx;
+  border-radius: 999rpx;
+}
+
+.teams {
+  background: linear-gradient(150deg, #f8fbf9 0%, #f3f8f5 100%);
+  border-radius: 20rpx;
+  padding: 10rpx 16rpx;
+  border: 1rpx solid rgba(223, 236, 228, 0.9);
+}
+
+.team-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 16rpx;
+  padding: 16rpx 0;
+  border-bottom: 1rpx solid rgba(220, 232, 225, 0.7);
+}
+
+.team-row:last-child {
+  border-bottom: none;
+}
+
+.team-label {
+  width: 64rpx;
+  color: #5d6b79;
+  font-size: 22rpx;
+  line-height: 40rpx;
+  font-weight: 600;
+}
+
+.team-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.team-text {
+  color: #16212f;
+  font-size: 29rpx;
+  line-height: 1.45;
+  font-weight: 600;
+  word-break: break-all;
+}
+
+.meta-grid {
+  margin-top: 16rpx;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+}
+
+.meta-item {
+  min-width: 180rpx;
+  flex: 1;
+  background: #f7f9fc;
+  border-radius: 18rpx;
+  padding: 16rpx 18rpx;
+  box-sizing: border-box;
+}
+
+.meta-item.highlight {
+  background: linear-gradient(135deg, rgba(7, 193, 96, 0.12) 0%, rgba(7, 193, 96, 0.05) 100%);
+}
+
+.meta-label {
+  display: block;
+  margin-bottom: 8rpx;
+  color: #7f8b99;
+  font-size: 21rpx;
+}
+
+.meta-value {
+  display: block;
+  color: #16212f;
+  font-size: 24rpx;
+  font-weight: 600;
+  line-height: 1.45;
+  word-break: break-all;
+}
+
+.meta-value.winner {
+  color: #11814a;
+}
+
+.meta-value.subtle {
+  color: #617080;
+  font-weight: 500;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12rpx;
+  margin-top: 18rpx;
+}
+
+.action-btn {
+  margin: 0;
+  min-width: 108rpx;
+}
+
+.match-card.compact {
+  padding: 20rpx 20rpx 18rpx;
+  border-radius: 22rpx;
+  margin-bottom: 16rpx;
+}
+
+.match-card.compact .header {
+  margin-bottom: 14rpx;
+}
+
+.match-card.compact .sport {
+  font-size: 29rpx;
+}
+
+.match-card.compact .format {
+  font-size: 20rpx;
+  padding: 6rpx 12rpx;
+}
+
+.match-card.compact .teams {
+  padding: 8rpx 14rpx;
+}
+
+.match-card.compact .team-row {
+  padding: 12rpx 0;
+}
+
+.match-card.compact .team-label {
+  font-size: 20rpx;
+  line-height: 36rpx;
+}
+
+.match-card.compact .team-text {
+  font-size: 25rpx;
+}
+
+.match-card.compact .meta-grid {
+  margin-top: 14rpx;
+  gap: 10rpx;
+}
+
+.match-card.compact .meta-item {
+  min-width: 160rpx;
+  padding: 14rpx 16rpx;
+}
+
+.match-card.compact .meta-label {
+  margin-bottom: 6rpx;
+  font-size: 20rpx;
+}
+
+.match-card.compact .meta-value {
+  font-size: 22rpx;
+}
+
+.match-card.compact .actions {
+  margin-top: 14rpx;
+}

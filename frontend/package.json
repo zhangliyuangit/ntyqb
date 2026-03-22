@@ -1,0 +1,12 @@
+{
+  "name": "ntyqb-miniapp",
+  "version": "0.0.1",
+  "private": true,
+  "description": "你挺有球呗微信小程序",
+  "scripts": {
+    "typecheck": "echo \"Use WeChat DevTools to compile TypeScript\""
+  },
+  "devDependencies": {
+    "miniprogram-api-typings": "^4.0.1"
+  }
+}

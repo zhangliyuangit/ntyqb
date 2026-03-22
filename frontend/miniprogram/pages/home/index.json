@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "你挺有球呗",
+  "usingComponents": {
+    "match-card": "../../components/match-card/index"
+  }
+}

@@ -1,0 +1,52 @@
+{
+  "pages": [
+    "pages/auth/index",
+    "pages/home/index",
+    "pages/leaderboard/index",
+    "pages/records/index",
+    "pages/profile/index",
+    "pages/player/index"
+  ],
+  "window": {
+    "navigationBarBackgroundColor": "#f7f8fa",
+    "navigationBarTitleText": "你挺有球呗",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#f2f4f7",
+    "backgroundTextStyle": "light"
+  },
+  "style": "v2",
+  "lazyCodeLoading": "requiredComponents",
+  "sitemapLocation": "sitemap.json",
+  "tabBar": {
+    "color": "#788190",
+    "selectedColor": "#07c160",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "black",
+    "list": [
+      {
+        "pagePath": "pages/home/index",
+        "text": "首页",
+        "iconPath": "assets/tabbar/home.png",
+        "selectedIconPath": "assets/tabbar/home-active.png"
+      },
+      {
+        "pagePath": "pages/leaderboard/index",
+        "text": "排行榜",
+        "iconPath": "assets/tabbar/leaderboard.png",
+        "selectedIconPath": "assets/tabbar/leaderboard-active.png"
+      },
+      {
+        "pagePath": "pages/records/index",
+        "text": "记录",
+        "iconPath": "assets/tabbar/records.png",
+        "selectedIconPath": "assets/tabbar/records-active.png"
+      },
+      {
+        "pagePath": "pages/profile/index",
+        "text": "我的",
+        "iconPath": "assets/tabbar/profile.png",
+        "selectedIconPath": "assets/tabbar/profile-active.png"
+      }
+    ]
+  }
+}

@@ -1,0 +1,34 @@
+<view class="page">
+  <view wx:if="{{loading}}" class="empty">正在加载球局面板…</view>
+
+  <block wx:elif="{{errorMessage}}">
+    <view class="card empty">
+      <view class="error-title">页面初始化失败</view>
+      <view class="error-desc">{{errorMessage}}</view>
+      <button class="button-primary retry-btn" bindtap="retryLoad">重试</button>
+    </view>
+  </block>
+
+  <block wx:else>
+    <view class="notice section">
+      <view class="notice-head">
+        <text class="notice-badge">播报</text>
+        <text class="notice-meta">球馆今日份嘴替</text>
+      </view>
+      <view class="notice-text">{{noticeText}}</view>
+    </view>
+
+    <view class="section">
+      <view class="section-head feed-head">
+        <view>
+          <view class="section-title">全部比赛记录</view>
+          <view class="section-subtitle">首页只看大家最近都打了什么球</view>
+        </view>
+        <view class="feed-count">{{matches.length}} 场</view>
+      </view>
+
+      <view wx:if="{{matches.length === 0}}" class="card empty">暂时还没有可展示的比赛记录</view>
+      <match-card wx:for="{{matches}}" wx:key="id" match="{{item}}" />
+    </view>
+  </block>
+</view>
