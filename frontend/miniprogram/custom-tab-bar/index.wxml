@@ -1,0 +1,31 @@
+<view wx:if="{{!overlayVisible}}" class="custom-tabbar-shell">
+  <view class="custom-tabbar">
+    <view
+      wx:for="{{leftTabs}}"
+      wx:key="key"
+      class="tab-item {{selected === item.key ? 'active' : ''}}"
+      data-page-path="{{item.pagePath}}"
+      bindtap="onTabTap"
+    >
+      <image class="tab-icon" src="{{selected === item.key ? item.selectedIconPath : item.iconPath}}" mode="aspectFit" />
+      <text class="tab-label">{{item.text}}</text>
+    </view>
+
+    <view class="tab-plus-spacer"></view>
+
+    <view
+      wx:for="{{rightTabs}}"
+      wx:key="key"
+      class="tab-item {{selected === item.key ? 'active' : ''}}"
+      data-page-path="{{item.pagePath}}"
+      bindtap="onTabTap"
+    >
+      <image class="tab-icon" src="{{selected === item.key ? item.selectedIconPath : item.iconPath}}" mode="aspectFit" />
+      <text class="tab-label">{{item.text}}</text>
+    </view>
+
+    <view class="tab-plus-button" bindtap="onPlusTap">
+      <text class="tab-plus-sign">+</text>
+    </view>
+  </view>
+</view>

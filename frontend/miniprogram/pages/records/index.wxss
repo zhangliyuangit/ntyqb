@@ -1,24 +1,5 @@
-.record-shell {
-  padding: 32rpx 30rpx;
-  border-radius: 34rpx;
-  background:
-    radial-gradient(circle at top right, rgba(7, 193, 96, 0.14), transparent 34%),
-    linear-gradient(160deg, #ffffff 0%, #f3faf6 100%);
-  border: 1rpx solid rgba(223, 236, 228, 0.9);
-}
-
-.record-shell-title {
-  font-size: 40rpx;
-  line-height: 1.24;
-  font-weight: 700;
-  color: #16212f;
-}
-
-.record-shell-desc {
-  margin-top: 12rpx;
-  color: #697684;
-  font-size: 24rpx;
-  line-height: 1.7;
+.record-page {
+  position: relative;
 }
 
 .workflow-strip {
@@ -41,56 +22,6 @@
   color: #0f8e4a;
 }
 
-.record-hero {
-  background:
-    radial-gradient(circle at top right, rgba(7, 193, 96, 0.1), transparent 34%),
-    linear-gradient(155deg, #ffffff 0%, #f5fbf7 100%);
-  border-radius: 30rpx;
-  padding: 28rpx;
-  border: 1rpx solid rgba(223, 236, 228, 0.9);
-}
-
-.record-hero-user {
-  display: flex;
-  align-items: center;
-  gap: 18rpx;
-}
-
-.record-avatar {
-  width: 96rpx;
-  height: 96rpx;
-  border-radius: 26rpx;
-  border: 6rpx solid rgba(7, 193, 96, 0.12);
-}
-
-.record-hero-title {
-  font-size: 32rpx;
-  font-weight: 700;
-  color: #16212f;
-}
-
-.record-hero-desc {
-  margin-top: 6rpx;
-  color: #6a7785;
-  font-size: 23rpx;
-}
-
-.selection-strip {
-  display: flex;
-  gap: 12rpx;
-  flex-wrap: wrap;
-  margin-top: 22rpx;
-}
-
-.selection-pill {
-  padding: 10rpx 16rpx;
-  border-radius: 999rpx;
-  background: rgba(255, 255, 255, 0.8);
-  color: #476353;
-  font-size: 22rpx;
-  font-weight: 600;
-}
-
 .step-card {
   background: rgba(255, 255, 255, 0.92);
   border-radius: 28rpx;
@@ -99,7 +30,12 @@
   box-shadow: 0 16rpx 36rpx rgba(15, 23, 42, 0.04);
 }
 
-.step-head {
+.filter-card {
+  margin-bottom: 24rpx;
+}
+
+.step-head,
+.section-head {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -123,12 +59,18 @@
   font-size: 22rpx;
 }
 
-.section-head {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 20rpx;
-  margin-bottom: 18rpx;
+.list-toolbar {
+  padding: 8rpx 4rpx 0;
+}
+
+.list-toolbar-title {
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #16212f;
+}
+
+.status-tabs {
+  margin-bottom: 0;
 }
 
 .helper {
@@ -351,17 +293,6 @@
   margin: 0;
 }
 
-.submit-btn {
-  width: 100%;
-  margin-top: 10rpx;
-  min-height: 80rpx;
-  font-size: 26rpx;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
 .field-placeholder {
   font-size: 22rpx;
   color: #a0acb8;
@@ -375,19 +306,88 @@
   line-height: 1.6;
 }
 
-.list-toolbar {
-  padding: 8rpx 4rpx 0;
+.create-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
 }
 
-.list-toolbar-title {
-  font-size: 34rpx;
-  font-weight: 700;
-  color: #16212f;
+.create-overlay-mask {
+  position: absolute;
+  inset: 0;
+  background: rgba(16, 24, 38, 0.26);
 }
 
-.list-toolbar-desc {
-  margin-top: 10rpx;
-  color: #6f7d8c;
-  font-size: 24rpx;
-  line-height: 1.7;
+.create-sheet {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 88vh;
+  max-height: 92vh;
+  border-radius: 36rpx 36rpx 0 0;
+  background: linear-gradient(180deg, #f9fcfa 0%, #f5f7f8 100%);
+  box-shadow: 0 -18rpx 48rpx rgba(16, 24, 38, 0.12);
+  display: flex;
+  flex-direction: column;
+}
+
+.create-sheet-handle {
+  width: 96rpx;
+  height: 8rpx;
+  border-radius: 999rpx;
+  background: rgba(120, 129, 144, 0.32);
+  margin: 18rpx auto 0;
+}
+
+.create-sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20rpx;
+  padding: 22rpx 26rpx 18rpx;
+}
+
+.sheet-close {
+  min-width: 104rpx;
+  text-align: center;
+  padding: 12rpx 20rpx;
+  border-radius: 999rpx;
+  background: rgba(240, 244, 247, 0.96);
+  color: #5f6d7c;
+  font-size: 23rpx;
+}
+
+.create-sheet-body {
+  flex: 1;
+  min-height: 0;
+  padding: 4rpx 24rpx 0;
+  box-sizing: border-box;
+}
+
+.sheet-tail-space {
+  margin-bottom: 12rpx;
+}
+
+.create-sheet-footer {
+  display: flex;
+  gap: 16rpx;
+  padding: 18rpx 24rpx calc(18rpx + env(safe-area-inset-bottom));
+  background: rgba(255, 255, 255, 0.96);
+  border-top: 1rpx solid rgba(229, 235, 241, 0.96);
+}
+
+.footer-btn {
+  flex: 1;
+  min-height: 82rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  font-size: 25rpx;
+  font-weight: 600;
+}
+
+.footer-submit {
+  box-shadow: 0 12rpx 22rpx rgba(7, 193, 96, 0.16);
 }

@@ -1,4 +1,4 @@
-<view class="page home-page">
+<view class="page home-page tab-page">
   <view wx:if="{{loading}}" class="empty">正在加载球局面板…</view>
 
   <block wx:elif="{{errorMessage}}">
@@ -44,7 +44,7 @@
       </view>
 
       <view wx:if="{{matches.length === 0}}" class="card empty">暂时还没有可展示的比赛记录</view>
-      <match-card wx:for="{{matches}}" wx:key="id" match="{{item}}" />
+      <match-card wx:for="{{matches}}" wx:key="id" match="{{item}}" showActions="{{false}}" />
     </view>
   </block>
 </view>

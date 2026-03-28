@@ -1,4 +1,4 @@
-<view class="page">
+<view class="page tab-page">
   <view wx:if="{{loading}}" class="empty">正在载入我的球馆数据…</view>
 
   <block wx:else>

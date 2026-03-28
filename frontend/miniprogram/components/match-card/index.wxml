@@ -34,7 +34,7 @@
     </view>
   </view>
 
-  <view class="actions" catchtap="noop">
+  <view wx:if="{{showActions}}" class="actions" catchtap="noop">
     <button wx:if="{{match.canConfirm}}" class="button-primary action-btn" size="mini" bindtap="onConfirmTap">确认</button>
     <button wx:if="{{match.canReject}}" class="button-warn action-btn" size="mini" bindtap="onRejectTap">拒绝</button>
     <button wx:if="{{match.canCancel}}" class="button-ghost action-btn" size="mini" bindtap="onCancelTap">取消</button>

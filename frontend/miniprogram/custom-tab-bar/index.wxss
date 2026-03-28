@@ -1,0 +1,78 @@
+.custom-tabbar-shell {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.custom-tabbar {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0;
+  min-height: 92rpx;
+  padding: 12rpx 18rpx calc(6rpx + env(safe-area-inset-bottom));
+  border-radius: 30rpx 30rpx 0 0;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 -8rpx 32rpx rgba(18, 28, 45, 0.08);
+  border: 1rpx solid rgba(229, 235, 241, 0.95);
+  backdrop-filter: blur(14rpx);
+  pointer-events: auto;
+  overflow: visible;
+}
+
+.tab-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6rpx;
+  min-width: 0;
+  color: #7f8b99;
+  padding-top: 2rpx;
+}
+
+.tab-plus-spacer {
+  flex: 0 0 118rpx;
+}
+
+.tab-item.active {
+  color: #0f8e4a;
+}
+
+.tab-icon {
+  width: 44rpx;
+  height: 44rpx;
+}
+
+.tab-label {
+  font-size: 19rpx;
+  line-height: 1.2;
+}
+
+.tab-plus-button {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  transform: translate(-50%, -28rpx);
+  width: 94rpx;
+  height: 94rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #07c160 0%, #06b258 100%);
+  box-shadow: 0 12rpx 26rpx rgba(7, 193, 96, 0.22);
+  border: 8rpx solid rgba(255, 255, 255, 0.96);
+  color: #ffffff;
+}
+
+.tab-plus-sign {
+  font-size: 48rpx;
+  line-height: 1;
+  transform: translateY(-2rpx);
+}

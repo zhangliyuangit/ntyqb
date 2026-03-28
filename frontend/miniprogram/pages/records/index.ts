@@ -16,11 +16,18 @@ const SPORT_OPTIONS = [
   { value: "TABLE_TENNIS", label: "🏓 乒乓球" }
 ];
 
+const STORAGE_KEYS = {
+  prefillSport: "records_prefill_sport",
+  defaultScope: "records_default_scope",
+  defaultStatus: "records_default_status",
+  openCreateOverlay: "records_open_create_overlay"
+};
+
 Page({
   data: {
     loading: true,
     saving: false,
-    panel: "create",
+    createOverlayVisible: false,
     sportOptions: SPORT_OPTIONS,
     activeSport: "BILLIARDS",
     format: "SINGLES",
@@ -44,37 +51,79 @@ Page({
   },
   onShow() {
     if (!requireAuthPage()) {
+      this.syncTabBarOverlay(false);
       this.setData({ loading: false });
       return;
     }
     this.bootstrap();
   },
+  onHide() {
+    this.cleanupCreateOverlay();
+  },
+  onUnload() {
+    this.cleanupCreateOverlay();
+  },
   async bootstrap() {
+    this.syncTabBarOverlay(false);
     this.setData({ loading: true });
     try {
       const me = await getMe();
-      const presetSport = wx.getStorageSync("records_prefill_sport") || this.data.activeSport;
-      const presetPanel = wx.getStorageSync("records_default_panel") || this.data.panel;
-      const presetScope = wx.getStorageSync("records_default_scope") || this.data.listScope;
-      const presetStatus = wx.getStorageSync("records_default_status") || this.data.listStatus;
-      wx.removeStorageSync("records_prefill_sport");
-      wx.removeStorageSync("records_default_panel");
-      wx.removeStorageSync("records_default_scope");
-      wx.removeStorageSync("records_default_status");
+      const presetSport = wx.getStorageSync(STORAGE_KEYS.prefillSport) || this.data.activeSport;
+      const presetScope = wx.getStorageSync(STORAGE_KEYS.defaultScope) || this.data.listScope;
+      const presetStatus = wx.getStorageSync(STORAGE_KEYS.defaultStatus) || this.data.listStatus;
+      const shouldOpenCreateOverlay = !!wx.getStorageSync(STORAGE_KEYS.openCreateOverlay);
+      wx.removeStorageSync(STORAGE_KEYS.prefillSport);
+      wx.removeStorageSync(STORAGE_KEYS.defaultScope);
+      wx.removeStorageSync(STORAGE_KEYS.defaultStatus);
+      wx.removeStorageSync(STORAGE_KEYS.openCreateOverlay);
       this.setData({
         myUser: me.user,
         activeSport: presetSport,
-        panel: presetPanel,
         listScope: presetScope,
         listStatus: presetStatus,
         teamA: [me.user],
         loading: false
       });
-      await Promise.all([this.loadRecentPlayers(), this.loadMatches()]);
+      await this.loadMatches();
+      if (shouldOpenCreateOverlay) {
+        await this.openCreateOverlay();
+      }
     } catch (error) {
       this.setData({ loading: false });
       wx.showToast({ title: "记录页加载失败", icon: "none" });
     }
+  },
+  noop() {},
+  syncTabBarOverlay(visible: boolean) {
+    const tabBar = this.getTabBar?.();
+    if (tabBar?.setData) {
+      tabBar.setData({ overlayVisible: visible });
+    }
+  },
+  async openCreateOverlay() {
+    if (!this.data.myUser) {
+      wx.showToast({ title: "页面还在加载", icon: "none" });
+      return;
+    }
+    this.resetForm();
+    this.setData({ createOverlayVisible: true });
+    this.syncTabBarOverlay(true);
+    await this.loadRecentPlayers();
+  },
+  closeCreateOverlay() {
+    if (this.data.saving) {
+      return;
+    }
+    this.cleanupCreateOverlay();
+  },
+  cleanupCreateOverlay() {
+    if (!this.data.createOverlayVisible) {
+      this.syncTabBarOverlay(false);
+      return;
+    }
+    this.setData({ createOverlayVisible: false });
+    this.syncTabBarOverlay(false);
+    this.resetForm();
   },
   async loadRecentPlayers() {
     try {
@@ -88,17 +137,12 @@ Page({
     try {
       const response = await listMatches({
         scope: this.data.listScope,
-        sportType: this.data.activeSport,
         status: this.data.listStatus
       });
       this.setData({ matches: response.items });
     } catch (error) {
       wx.showToast({ title: "记录列表加载失败", icon: "none" });
     }
-  },
-  onPanelTap(event: WechatMiniprogram.BaseEvent) {
-    const panel = event.currentTarget.dataset.panel;
-    this.setData({ panel });
   },
   async onSportTap(event: WechatMiniprogram.BaseEvent) {
     const sportType = event.currentTarget.dataset.sportType;
@@ -117,7 +161,7 @@ Page({
       searchKeyword: "",
       searchResults: []
     });
-    await Promise.all([this.loadRecentPlayers(), this.loadMatches()]);
+    await this.loadRecentPlayers();
   },
   onFormatTap(event: WechatMiniprogram.BaseEvent) {
     const format = event.currentTarget.dataset.format;
@@ -182,7 +226,8 @@ Page({
     this.applyPlayer({
       id: player.id,
       nickname: player.nickname,
-      avatarUrl: player.avatarUrl
+      avatarUrl: player.avatarUrl,
+      tag: player.tag
     });
   },
   chooseSearchResult(event: WechatMiniprogram.BaseEvent) {
@@ -211,7 +256,7 @@ Page({
       this.setData({ saving: true });
       await createMatch(payload);
       wx.showToast({ title: "已发起，等待确认", icon: "success" });
-      this.resetForm();
+      this.cleanupCreateOverlay();
       await this.loadMatches();
     } catch (error: any) {
       wx.showToast({ title: error.message || "提交失败", icon: "none" });
@@ -355,6 +400,7 @@ Page({
       teamB: [],
       searchKeyword: "",
       searchResults: [],
+      recentPlayers: [],
       sets: [
         { aScore: "", bScore: "" },
         { aScore: "", bScore: "" }

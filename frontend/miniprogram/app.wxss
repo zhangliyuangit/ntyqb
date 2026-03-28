@@ -30,6 +30,10 @@ page {
   box-sizing: border-box;
 }
 
+.tab-page {
+  padding-bottom: calc(136rpx + env(safe-area-inset-bottom));
+}
+
 .card {
   background: var(--card-bg);
   border-radius: var(--radius-lg);

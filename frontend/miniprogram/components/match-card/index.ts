@@ -9,6 +9,10 @@ Component({
     compact: {
       type: Boolean,
       value: false
+    },
+    showActions: {
+      type: Boolean,
+      value: true
     }
   },
   data: {

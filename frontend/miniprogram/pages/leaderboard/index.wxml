@@ -1,4 +1,4 @@
-<view class="page board-page">
+<view class="page board-page tab-page">
   <view class="board-hero section">
     <view class="section-kicker">排行榜</view>
     <view class="board-hero-title">{{currentSportLabel}}</view>

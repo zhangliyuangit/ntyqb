@@ -16,19 +16,24 @@ const SPORT_OPTIONS = [
   { value: "TABLE_TENNIS", label: "🏓 乒乓球" }
 ];
 
+const STORAGE_KEYS = {
+  prefillSport: "records_prefill_sport",
+  defaultScope: "records_default_scope",
+  defaultStatus: "records_default_status",
+  openCreateOverlay: "records_open_create_overlay"
+};
+
 Page({
   data: {
     loading: true,
     saving: false,
-    panel: "create",
+    createOverlayVisible: false,
     sportOptions: SPORT_OPTIONS,
     activeSport: "BILLIARDS",
     format: "SINGLES",
     winnerSide: "A",
     bestOf: 5,
     winMarginBalls: "",
-    focusWinMargin: false,
-    focusFirstScore: false,
     remark: "",
     searchKeyword: "",
     searchResults: [],
@@ -46,29 +51,79 @@ Page({
   },
   onShow() {
     if (!requireAuthPage()) {
+      this.syncTabBarOverlay(false);
       this.setData({ loading: false });
       return;
     }
     this.bootstrap();
   },
+  onHide() {
+    this.cleanupCreateOverlay();
+  },
+  onUnload() {
+    this.cleanupCreateOverlay();
+  },
   async bootstrap() {
+    this.syncTabBarOverlay(false);
     this.setData({ loading: true });
     try {
       const me = await getMe();
-      const presetSport = wx.getStorageSync("records_prefill_sport") || this.data.activeSport;
-      wx.removeStorageSync("records_prefill_sport");
+      const presetSport = wx.getStorageSync(STORAGE_KEYS.prefillSport) || this.data.activeSport;
+      const presetScope = wx.getStorageSync(STORAGE_KEYS.defaultScope) || this.data.listScope;
+      const presetStatus = wx.getStorageSync(STORAGE_KEYS.defaultStatus) || this.data.listStatus;
+      const shouldOpenCreateOverlay = !!wx.getStorageSync(STORAGE_KEYS.openCreateOverlay);
+      wx.removeStorageSync(STORAGE_KEYS.prefillSport);
+      wx.removeStorageSync(STORAGE_KEYS.defaultScope);
+      wx.removeStorageSync(STORAGE_KEYS.defaultStatus);
+      wx.removeStorageSync(STORAGE_KEYS.openCreateOverlay);
       this.setData({
         myUser: me.user,
         activeSport: presetSport,
+        listScope: presetScope,
+        listStatus: presetStatus,
         teamA: [me.user],
         loading: false
       });
-      this.scheduleScoreFocus();
-      await Promise.all([this.loadRecentPlayers(), this.loadMatches()]);
+      await this.loadMatches();
+      if (shouldOpenCreateOverlay) {
+        await this.openCreateOverlay();
+      }
     } catch (error) {
       this.setData({ loading: false });
       wx.showToast({ title: "记录页加载失败", icon: "none" });
     }
+  },
+  noop() {},
+  syncTabBarOverlay(visible) {
+    const tabBar = this.getTabBar && this.getTabBar();
+    if (tabBar && tabBar.setData) {
+      tabBar.setData({ overlayVisible: visible });
+    }
+  },
+  async openCreateOverlay() {
+    if (!this.data.myUser) {
+      wx.showToast({ title: "页面还在加载", icon: "none" });
+      return;
+    }
+    this.resetForm();
+    this.setData({ createOverlayVisible: true });
+    this.syncTabBarOverlay(true);
+    await this.loadRecentPlayers();
+  },
+  closeCreateOverlay() {
+    if (this.data.saving) {
+      return;
+    }
+    this.cleanupCreateOverlay();
+  },
+  cleanupCreateOverlay() {
+    if (!this.data.createOverlayVisible) {
+      this.syncTabBarOverlay(false);
+      return;
+    }
+    this.setData({ createOverlayVisible: false });
+    this.syncTabBarOverlay(false);
+    this.resetForm();
   },
   async loadRecentPlayers() {
     try {
@@ -82,19 +137,11 @@ Page({
     try {
       const response = await listMatches({
         scope: this.data.listScope,
-        sportType: this.data.activeSport,
         status: this.data.listStatus
       });
       this.setData({ matches: response.items });
     } catch (error) {
       wx.showToast({ title: "记录列表加载失败", icon: "none" });
-    }
-  },
-  onPanelTap(event) {
-    const panel = event.currentTarget.dataset.panel;
-    this.setData({ panel });
-    if (panel === "create") {
-      this.scheduleScoreFocus();
     }
   },
   async onSportTap(event) {
@@ -114,8 +161,7 @@ Page({
       searchKeyword: "",
       searchResults: []
     });
-    this.scheduleScoreFocus(sportType);
-    await Promise.all([this.loadRecentPlayers(), this.loadMatches()]);
+    await this.loadRecentPlayers();
   },
   onFormatTap(event) {
     const format = event.currentTarget.dataset.format;
@@ -125,7 +171,6 @@ Page({
       teamA,
       teamB: []
     });
-    this.scheduleScoreFocus();
   },
   onWinnerTap(event) {
     this.setData({ winnerSide: event.currentTarget.dataset.side });
@@ -136,15 +181,6 @@ Page({
   onInput(event) {
     const field = event.currentTarget.dataset.field;
     this.setData({ [field]: event.detail.value });
-  },
-  onFormFieldFocus() {
-    if (!this.data.focusWinMargin && !this.data.focusFirstScore) {
-      return;
-    }
-    this.setData({
-      focusWinMargin: false,
-      focusFirstScore: false
-    });
   },
   onSetInput(event) {
     const index = Number(event.currentTarget.dataset.index);
@@ -190,7 +226,8 @@ Page({
     this.applyPlayer({
       id: player.id,
       nickname: player.nickname,
-      avatarUrl: player.avatarUrl
+      avatarUrl: player.avatarUrl,
+      tag: player.tag
     });
   },
   chooseSearchResult(event) {
@@ -219,7 +256,7 @@ Page({
       this.setData({ saving: true });
       await createMatch(payload);
       wx.showToast({ title: "已发起，等待确认", icon: "success" });
-      this.resetForm();
+      this.cleanupCreateOverlay();
       await this.loadMatches();
     } catch (error) {
       wx.showToast({ title: error.message || "提交失败", icon: "none" });
@@ -363,36 +400,11 @@ Page({
       teamB: [],
       searchKeyword: "",
       searchResults: [],
+      recentPlayers: [],
       sets: [
         { aScore: "", bScore: "" },
         { aScore: "", bScore: "" }
       ]
     });
-    this.scheduleScoreFocus();
-  },
-  scheduleScoreFocus(sportType) {
-    const nextSport = sportType || this.data.activeSport;
-    this.setData({
-      focusWinMargin: false,
-      focusFirstScore: false
-    });
-    setTimeout(() => {
-      if (this.data.panel !== "create") {
-        return;
-      }
-      this.setData({
-        focusWinMargin: nextSport === "BILLIARDS",
-        focusFirstScore: nextSport !== "BILLIARDS"
-      });
-      setTimeout(() => {
-        if (!this.data.focusWinMargin && !this.data.focusFirstScore) {
-          return;
-        }
-        this.setData({
-          focusWinMargin: false,
-          focusFirstScore: false
-        });
-      }, 180);
-    }, 80);
   }
 });
