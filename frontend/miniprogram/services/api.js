@@ -1,7 +1,7 @@
 const TOKEN_KEY = "ntyqb_token";
 const MOCK_USER_KEY = "ntyqb_mock_user_key";
 const AUTH_PROFILE_KEY = "ntyqb_auth_profile";
-const DEFAULT_API_BASE_URL = "http://39.102.100.241/api";
+const DEFAULT_API_BASE_URL = "https://niyoushashilia.cloud/api";
 const AUTH_PAGE_URL = "/pages/auth/index";
 const HOME_PAGE_URL = "/pages/home/index";
 

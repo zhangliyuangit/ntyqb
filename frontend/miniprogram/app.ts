@@ -2,7 +2,7 @@ import { restoreSession } from "./services/api";
 
 App<IAppOption>({
   globalData: {
-    apiBaseUrl: "http://39.102.100.241/api",
+    apiBaseUrl: "https://niyoushashilia.cloud/api",
     token: "",
     user: null
   },

@@ -2,6 +2,8 @@ package com.ntyqb.backend;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ntyqb.backend.entity.MatchRecord;
+import com.ntyqb.backend.repository.MatchRecordRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -11,10 +13,13 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.time.LocalDateTime;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -26,6 +31,9 @@ class ApplicationApiTests {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private MatchRecordRepository matchRecordRepository;
 
     @Test
     void shouldLoginAndLoadMe() throws Exception {
@@ -162,6 +170,65 @@ class ApplicationApiTests {
         assertThat(allItems.size()).isGreaterThan(mineItems.size());
         assertThat(allItems)
                 .anyMatch(item -> item.path("initiatorId").asLong() == 6L);
+    }
+
+    @Test
+    void shouldLoadMeWhenExpiredPendingMatchesNeedSettlement() throws Exception {
+        String demoToken = login("local-demo-user", "阿北", "https://example.com/avatar-demo.png");
+
+        String pendingResponse = mockMvc.perform(get("/api/matches")
+                        .header("X-Auth-Token", demoToken)
+                        .param("scope", "pending_confirmation"))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        long pendingId = objectMapper.readTree(pendingResponse).path("items").get(0).path("id").asLong();
+        MatchRecord pendingMatch = matchRecordRepository.findById(pendingId).orElseThrow();
+        pendingMatch.setExpiresAt(LocalDateTime.now().minusMinutes(5));
+        matchRecordRepository.save(pendingMatch);
+
+        mockMvc.perform(get("/api/me").header("X-Auth-Token", demoToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.recentMatches", notNullValue()));
+    }
+
+    @Test
+    void shouldLoadRecentOpponents() throws Exception {
+        String demoToken = login("local-demo-user", "阿北", "https://example.com/avatar-demo.png");
+
+        mockMvc.perform(get("/api/users/recent-opponents")
+                        .header("X-Auth-Token", demoToken)
+                        .param("sportType", "BILLIARDS"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray());
+    }
+
+    @Test
+    void shouldLoadPlayerProfileWithRecentMatches() throws Exception {
+        String demoToken = login("local-demo-user", "阿北", "https://example.com/avatar-demo.png");
+
+        String pendingResponse = mockMvc.perform(get("/api/matches")
+                        .header("X-Auth-Token", demoToken)
+                        .param("scope", "pending_confirmation"))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        long opponentUserId = objectMapper.readTree(pendingResponse)
+                .path("items").get(0)
+                .path("participants").get(0)
+                .path("userId")
+                .asLong();
+
+        mockMvc.perform(get("/api/users/" + opponentUserId + "/profile")
+                        .header("X-Auth-Token", demoToken)
+                        .param("sportType", "BILLIARDS"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.user.id").value(opponentUserId))
+                .andExpect(jsonPath("$.recentMatches").isArray());
     }
 
     @Test

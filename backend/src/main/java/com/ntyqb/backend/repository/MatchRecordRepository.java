@@ -22,6 +22,7 @@ public interface MatchRecordRepository extends JpaRepository<MatchRecord, Long> 
             """)
     Optional<MatchRecord> findDetailedById(Long id);
 
+    @EntityGraph(attributePaths = {"participants", "participants.user"})
     List<MatchRecord> findByStatusAndExpiresAtBefore(MatchStatus status, LocalDateTime dateTime);
 
     @EntityGraph(attributePaths = {"initiator", "participants", "participants.user"})
