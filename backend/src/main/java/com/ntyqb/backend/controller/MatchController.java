@@ -1,9 +1,11 @@
 package com.ntyqb.backend.controller;
 
+import com.ntyqb.backend.config.AuthContext;
 import com.ntyqb.backend.dto.MatchDtos;
 import com.ntyqb.backend.entity.MatchStatus;
 import com.ntyqb.backend.entity.SportType;
 import com.ntyqb.backend.entity.User;
+import com.ntyqb.backend.exception.UnauthorizedException;
 import com.ntyqb.backend.service.AuthService;
 import com.ntyqb.backend.service.MatchService;
 import jakarta.validation.Valid;
@@ -39,8 +41,19 @@ public class MatchController {
             @RequestParam(required = false) SportType sportType,
             @RequestParam(required = false) MatchStatus status
     ) {
-        User user = authService.requireCurrentUser();
-        return matchService.listMatches(user.getId(), scope, sportType, status);
+        AuthContext.AuthInfo authInfo = AuthContext.get();
+        Long currentUserId = authInfo == null ? null : authInfo.userId();
+        if (currentUserId == null) {
+            if (!"all".equals(scope)) {
+                throw new UnauthorizedException("请先登录");
+            }
+            MatchStatus visibleStatus = status == null ? MatchStatus.CONFIRMED : status;
+            if (visibleStatus != MatchStatus.CONFIRMED) {
+                throw new UnauthorizedException("请先登录");
+            }
+            return matchService.listMatches(null, scope, sportType, visibleStatus);
+        }
+        return matchService.listMatches(currentUserId, scope, sportType, status);
     }
 
     @GetMapping("/{matchId}")

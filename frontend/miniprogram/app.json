@@ -1,10 +1,10 @@
 {
   "pages": [
-    "pages/auth/index",
     "pages/home/index",
     "pages/leaderboard/index",
     "pages/records/index",
     "pages/profile/index",
+    "pages/auth/index",
     "pages/player/index"
   ],
   "window": {

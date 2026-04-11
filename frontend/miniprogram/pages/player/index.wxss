@@ -27,3 +27,7 @@
   color: #7f8b99;
   font-size: 24rpx;
 }
+
+.player-login-btn {
+  margin-top: 24rpx;
+}

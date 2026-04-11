@@ -60,6 +60,9 @@ public final class AuthDtos {
     ) {
     }
 
+    public record AvatarUploadResponse(String avatarUrl) {
+    }
+
     public record MeResponse(
             UserSummaryDto user,
             List<SportStatDto> stats,

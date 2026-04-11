@@ -16,3 +16,5 @@ app:
     session-days: 14
   seed:
     enabled: true
+  upload:
+    root-dir: ./target/test-uploads

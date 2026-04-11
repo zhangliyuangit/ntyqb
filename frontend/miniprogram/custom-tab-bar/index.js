@@ -1,3 +1,6 @@
+const tabBarState = require("./state");
+const { isLoggedIn, navigateToAuth } = require("../services/api");
+
 const TABS = [
   {
     key: "home",
@@ -35,7 +38,7 @@ const TABS = [
 
 Component({
   data: {
-    selected: "home",
+    selected: tabBarState.getCurrentTabKey() || tabBarState.DEFAULT_TAB_KEY,
     overlayVisible: false,
     leftTabs: TABS.slice(0, 2),
     rightTabs: TABS.slice(2)
@@ -55,19 +58,32 @@ Component({
       const pages = getCurrentPages();
       const currentPage = pages[pages.length - 1];
       const route = currentPage && currentPage.route ? currentPage.route : "";
-      const allTabs = this.data.leftTabs.concat(this.data.rightTabs);
-      const matchedTab = allTabs.find((item) => item.route === route);
-      const selected = matchedTab ? matchedTab.key : "home";
-      this.setData({ selected });
+      const selected = tabBarState.resolveSelectedTab({
+        route,
+        currentTabKey: tabBarState.getCurrentTabKey()
+      });
+      tabBarState.setCurrentTabByRoute(route || selected);
+      if (this.data.selected !== selected) {
+        this.setData({ selected });
+      }
     },
     onTabTap(event) {
       const pagePath = event.currentTarget.dataset.pagePath;
       if (!pagePath) {
         return;
       }
+      const selected = tabBarState.setCurrentTabByPagePath(pagePath);
+      if (this.data.selected !== selected) {
+        this.setData({ selected });
+      }
       wx.switchTab({ url: pagePath });
     },
     onPlusTap() {
+      if (!isLoggedIn()) {
+        wx.setStorageSync("records_open_create_overlay", "1");
+        navigateToAuth({ targetUrl: "/pages/records/index" });
+        return;
+      }
       const pages = getCurrentPages();
       const currentPage = pages[pages.length - 1];
       if (currentPage && currentPage.route === "pages/records/index" && typeof currentPage.openCreateOverlay === "function") {
@@ -75,6 +91,10 @@ Component({
         return;
       }
       wx.setStorageSync("records_open_create_overlay", "1");
+      const selected = tabBarState.setCurrentTabByPagePath("/pages/records/index");
+      if (this.data.selected !== selected) {
+        this.setData({ selected });
+      }
       wx.switchTab({ url: "/pages/records/index" });
     }
   }

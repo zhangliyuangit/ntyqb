@@ -85,6 +85,7 @@ public class MatchService {
         return toDto(detailed, initiator.getId());
     }
 
+    @Transactional
     public MatchDtos.MatchListResponse listMatches(Long currentUserId, String scope, SportType sportType, MatchStatus status) {
         expirePendingMatchesIfNeeded();
         List<MatchRecord> matches = "all".equals(scope)
@@ -97,6 +98,7 @@ public class MatchService {
         return new MatchDtos.MatchListResponse(items);
     }
 
+    @Transactional
     public MatchDtos.MatchDetailDto getMatch(Long matchId, Long currentUserId) {
         expirePendingMatchesIfNeeded();
         MatchRecord match = requireMatch(matchId);
@@ -169,6 +171,7 @@ public class MatchService {
         return toDto(saved, currentUser.getId());
     }
 
+    @Transactional
     public List<AuthDtos.HomeMatchSnippetDto> getPendingConfirmations(Long currentUserId, int limit) {
         return matchRecordRepository.findAllByUserId(currentUserId, null, MatchStatus.PENDING).stream()
                 .filter(match -> match.getParticipants().stream()
@@ -180,6 +183,7 @@ public class MatchService {
                 .toList();
     }
 
+    @Transactional
     public List<AuthDtos.HomeMatchSnippetDto> getRecentMatches(Long currentUserId, int limit) {
         expirePendingMatchesIfNeeded();
         return matchRecordRepository.findAllByUserId(currentUserId, null, null).stream()

@@ -21,11 +21,16 @@ public class AuthInterceptor implements HandlerInterceptor {
         if (!path.startsWith("/api/")) {
             return true;
         }
-        if (path.equals("/api/auth/wechat/login") || path.equals("/api/health")) {
+        if (path.equals("/api/auth/wechat/login")
+                || path.startsWith("/api/uploads/")
+                || path.equals("/api/health")) {
             return true;
         }
 
         String token = request.getHeader("X-Auth-Token");
+        if (token == null || token.isBlank()) {
+            return true;
+        }
         Long userId = authService.resolveToken(token);
         AuthContext.set(userId, token);
         return true;

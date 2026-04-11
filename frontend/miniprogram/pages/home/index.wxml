@@ -10,41 +10,45 @@
   </block>
 
   <block wx:else>
-    <view class="notice section">
-      <view class="notice-head">
-        <text class="notice-badge">播报</text>
-        <text class="notice-meta">{{pendingCount > 0 ? '你有待确认比赛' : '今日球局公告'}}</text>
-      </view>
-      <view class="notice-text">我说白了，你有啥实力啊？？？</view>
-      <view class="notice-detail">{{homeSummary}}</view>
-    </view>
+    <view wx:if="{{refreshing}}" class="page-refresh-indicator section">内容更新中...</view>
 
-    <view wx:if="{{latestMatch}}" class="spotlight section">
-      <view class="section-kicker">刚刚结束</view>
-      <view class="spotlight-head">
-        <view>
-          <view class="spotlight-title">{{latestMatch.sportText}}</view>
-          <view class="spotlight-desc">{{latestMatch.teamLine}}</view>
+    <view class="page-stage {{refreshing ? 'is-refreshing' : 'is-settled'}}">
+      <view class="notice section">
+        <view class="notice-head">
+          <text class="notice-badge">播报</text>
+          <text class="notice-meta">{{pendingCount > 0 ? '你有待确认比赛' : '今日球局公告'}}</text>
         </view>
-        <text class="tag muted">{{latestMatch.statusText}}</text>
+        <view class="notice-text">我说白了，你有啥实力啊？？？</view>
+        <view class="notice-detail">{{homeSummary}}</view>
       </view>
-      <view class="spotlight-meta">
-        <text class="spotlight-detail">{{latestMatch.detailText}}</text>
-        <text class="spotlight-time">{{latestMatch.timeText}}</text>
-      </view>
-    </view>
 
-    <view class="section">
-      <view class="section-head feed-head">
-        <view>
-          <view class="section-title">最近比赛</view>
-          <view class="section-subtitle">首页先看大家刚刚打完哪些球局</view>
+      <view wx:if="{{latestMatch}}" class="spotlight section">
+        <view class="section-kicker">刚刚结束</view>
+        <view class="spotlight-head">
+          <view>
+            <view class="spotlight-title">{{latestMatch.sportText}}</view>
+            <view class="spotlight-desc">{{latestMatch.teamLine}}</view>
+          </view>
+          <text class="tag muted">{{latestMatch.statusText}}</text>
         </view>
-        <view class="feed-count">{{matches.length}} 场</view>
+        <view class="spotlight-meta">
+          <text class="spotlight-detail">{{latestMatch.detailText}}</text>
+          <text class="spotlight-time">{{latestMatch.timeText}}</text>
+        </view>
       </view>
 
-      <view wx:if="{{matches.length === 0}}" class="card empty">暂时还没有可展示的比赛记录</view>
-      <match-card wx:for="{{matches}}" wx:key="id" match="{{item}}" showActions="{{false}}" />
+      <view class="section">
+        <view class="section-head feed-head">
+          <view>
+            <view class="section-title">最近比赛</view>
+            <view class="section-subtitle">首页先看大家刚刚打完哪些球局</view>
+          </view>
+          <view class="feed-count">{{matches.length}} 场</view>
+        </view>
+
+        <view wx:if="{{matches.length === 0}}" class="card empty">暂时还没有可展示的比赛记录</view>
+        <match-card wx:for="{{matches}}" wx:key="id" match="{{item}}" showActions="{{false}}" />
+      </view>
     </view>
   </block>
 </view>

@@ -23,10 +23,17 @@ server:
 
 app:
   auth:
-    mode: mock
+    mode: wechat
     session-days: 14
+    wechat:
+      app-id: wx3526da7c39a4fc64
+      app-secret: ${WECHAT_MINIAPP_SECRET:}
+      api-base-url: https://api.weixin.qq.com
   user-tags:
     by-id:
       1: VIP
   seed:
     enabled: true
+  upload:
+    root-dir: ./data/uploads
+    public-base-url: https://niyoushashilia.cloud

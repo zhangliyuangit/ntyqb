@@ -22,6 +22,7 @@ public interface MatchRecordRepository extends JpaRepository<MatchRecord, Long> 
             """)
     Optional<MatchRecord> findDetailedById(Long id);
 
+    @EntityGraph(attributePaths = {"participants", "participants.user"})
     List<MatchRecord> findByStatusAndExpiresAtBefore(MatchStatus status, LocalDateTime dateTime);
 
     @EntityGraph(attributePaths = {"initiator", "participants", "participants.user"})
@@ -70,4 +71,21 @@ public interface MatchRecordRepository extends JpaRepository<MatchRecord, Long> 
             order by m.confirmedAt desc, m.id desc
             """)
     List<MatchRecord> findConfirmedByUserId(Long userId);
+
+    @EntityGraph(attributePaths = {"participants", "participants.user"})
+    @Query("""
+            select distinct m from MatchRecord m
+            left join fetch m.participants p
+            left join fetch p.user
+            where m.sportType = :sportType
+              and m.status = com.ntyqb.backend.entity.MatchStatus.CONFIRMED
+              and m.occurredAt >= :from
+              and m.occurredAt < :to
+            order by m.confirmedAt desc, m.id desc
+            """)
+    List<MatchRecord> findConfirmedBySportTypeWithinOccurredAt(
+            SportType sportType,
+            LocalDateTime from,
+            LocalDateTime to
+    );
 }

@@ -1,37 +1,134 @@
-const { listMatches, requireAuthPage } = require("../../services/api");
+const { getMe, isAuthError, isLoggedIn, listMatches } = require("../../services/api");
+const { syncTabBarSelection } = require("../../custom-tab-bar/state");
+const { beginPageRefresh, failPageRefresh, finishPageRefresh } = require("../../utils/page-refresh-state");
+const { detailSummary, formatDate, sportDisplayLabel, statusLabel, teamText } = require("../../utils/format");
+const { buildShareAppMessage, buildShareTimeline, enablePageShareMenu } = require("../../utils/share");
+
+function buildLatestMatch(match) {
+  if (!match) {
+    return null;
+  }
+  return {
+    sportText: sportDisplayLabel(match.sportType),
+    statusText: statusLabel(match.status),
+    teamLine: `${teamText(match, "A")} vs ${teamText(match, "B")}`,
+    detailText: detailSummary(match),
+    timeText: formatDate(match.occurredAt)
+  };
+}
 
 Page({
   data: {
     loading: true,
+    refreshing: false,
+    pageReady: false,
+    loggedIn: false,
     errorMessage: "",
-    noticeText: "我说白了，你有啥实力啊？？？",
-    matches: []
+    matches: [],
+    userName: "球友",
+    homeSummary: "",
+    latestMatch: null,
+    pendingCount: 0
   },
   onShow() {
-    if (!requireAuthPage()) {
-      this.setData({ loading: false });
-      return;
-    }
+    enablePageShareMenu();
+    syncTabBarSelection(this, "pages/home/index");
     this.loadPage();
   },
+  onShareAppMessage() {
+    return buildShareAppMessage({
+      title: "来你挺有球呗，看看最新球局和月榜",
+      path: "/pages/home/index"
+    });
+  },
+  onShareTimeline() {
+    return buildShareTimeline({
+      title: "来你挺有球呗，看看最新球局和月榜",
+      path: "/pages/home/index"
+    });
+  },
   async loadPage() {
-    this.setData({ loading: true, errorMessage: "" });
+    const loggedIn = isLoggedIn();
+    const hasContent = this.data.pageReady;
+    this.setData({
+      ...beginPageRefresh({ hasContent }),
+      loggedIn,
+      errorMessage: hasContent ? this.data.errorMessage : ""
+    });
     try {
-      const data = await listMatches({
-        scope: "all"
-      });
-      this.setData({
-        matches: data.items,
-        loading: false,
-        errorMessage: ""
-      });
+      if (loggedIn) {
+        const [me, data] = await Promise.all([
+          getMe(),
+          listMatches({
+            scope: "all"
+          })
+        ]);
+        const pendingCount = me.pendingConfirmations.length;
+        const homeSummary = pendingCount
+          ? `你有 ${pendingCount} 场比赛待确认，先把今天的球局结清楚。`
+          : me.recentMatches.length
+            ? "最近大家都在打球，首页先帮你把最新动态和下一步动作摆在前面。"
+            : "从这里发起第一场记录，把小圈子的球局慢慢沉淀下来。";
+        this.setData({
+          matches: data.items,
+          userName: me.user.nickname || "球友",
+          homeSummary,
+          latestMatch: buildLatestMatch(data.items[0]),
+          pendingCount,
+          loggedIn: true,
+          ...finishPageRefresh(),
+          errorMessage: ""
+        });
+        return;
+      }
+
+      await this.loadPublicHome(hasContent);
     } catch (error) {
+      if (isAuthError(error)) {
+        try {
+          await this.loadPublicHome(hasContent);
+        } catch (fallbackError) {
+          const message = fallbackError && fallbackError.message ? fallbackError.message : "加载失败，请确认后端服务和开发者工具配置";
+          this.setData({
+            ...failPageRefresh({ hasContent }),
+            errorMessage: hasContent ? "" : message
+          });
+          wx.showToast({ title: "加载失败", icon: "none" });
+        }
+        return;
+      }
       const message = error && error.message ? error.message : "加载失败，请确认后端服务和开发者工具配置";
-      this.setData({ loading: false, errorMessage: message });
+      this.setData({
+        ...failPageRefresh({ hasContent }),
+        errorMessage: hasContent ? "" : message
+      });
       wx.showToast({ title: "加载失败", icon: "none" });
     }
   },
   retryLoad() {
     this.loadPage();
+  },
+  async loadPublicHome(hasContent) {
+    const data = await listMatches(
+      {
+        scope: "all",
+        status: "CONFIRMED"
+      },
+      {
+        needAuth: false
+      }
+    );
+    this.setData({
+      matches: data.items,
+      userName: "游客",
+      homeSummary: data.items.length
+        ? "最近大家都在打球，首页先把最新球局摆在前面。"
+        : "暂时还没有新的球局动态。",
+      latestMatch: buildLatestMatch(data.items[0]),
+      pendingCount: 0,
+      loggedIn: false,
+      ...finishPageRefresh(),
+      errorMessage: hasContent ? "" : ""
+    });
   }
 });

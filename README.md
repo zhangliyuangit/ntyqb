@@ -34,7 +34,7 @@ mvn -Dmaven.repo.local=/Users/zhangliyuan/codexprojects/ntyqb/.m2 test
 
 1. 用微信开发者工具打开目录 `frontend`
 2. 在开发者工具中开启“不校验合法域名”
-3. 当前默认联调后端地址为 `http://39.102.100.241/api`
+3. 当前默认联调后端地址为 `https://niyoushashilia.cloud/api`
 4. 直接编译运行
 
 如果你临时要切回本地后端，把 [app.ts](/Users/zhangliyuan/codexprojects/ntyqb/frontend/miniprogram/app.ts) 和 [api.ts](/Users/zhangliyuan/codexprojects/ntyqb/frontend/miniprogram/services/api.ts) 里的默认地址改回本地即可。
@@ -92,7 +92,7 @@ mvn -Dmaven.repo.local=/Users/zhangliyuan/codexprojects/ntyqb/.m2 test
 
 ### 4. 这个项目里需要直接改掉的发布阻塞项
 
-- 前端请求地址现在写死在 [app.ts](/Users/zhangliyuan/codexprojects/ntyqb/frontend/miniprogram/app.ts) 和 [api.js](/Users/zhangliyuan/codexprojects/ntyqb/frontend/miniprogram/services/api.js) 里的 `http://127.0.0.1:8080/api`，上线前必须改成正式 `https` 域名
+- 前端请求地址现在默认使用正式域名 [app.ts](/Users/zhangliyuan/codexprojects/ntyqb/frontend/miniprogram/app.ts) 和 [api.js](/Users/zhangliyuan/codexprojects/ntyqb/frontend/miniprogram/services/api.js) 里的 `https://niyoushashilia.cloud/api`，如需本地联调再临时改回 `http://127.0.0.1:8080/api`
 - 前端不能再依赖开发者工具里的“`不校验合法域名`”
 - 后端当前 CORS 允许全部来源，配置在 [WebConfig.java](/Users/zhangliyuan/codexprojects/ntyqb/backend/src/main/java/com/ntyqb/backend/config/WebConfig.java)，上线前要改成你的正式小程序请求来源策略
 - 当前登录流程是“开发期模拟微信资料 + mock 登录”，要改成真实微信登录闭环
@@ -145,7 +145,7 @@ mvn -Dmaven.repo.local=/Users/zhangliyuan/codexprojects/ntyqb/.m2 test
 - [ ] 关闭 H2 Console
 - [ ] 关闭种子数据
 - [ ] 收紧 CORS
-- [ ] 把前端 API 地址改成正式 `https` 域名
+- [x] 把前端 API 地址改成正式 `https` 域名
 - [ ] 在微信公众平台配置合法域名
 - [ ] 配置隐私保护指引
 - [ ] 上传体验版并做真机测试

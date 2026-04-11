@@ -1,3 +1,5 @@
 {
-  "navigationBarTitleText": "排行榜"
+  "navigationBarTitleText": "排行榜",
+  "enableShareAppMessage": true,
+  "enableShareTimeline": true
 }

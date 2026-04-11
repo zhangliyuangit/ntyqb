@@ -1,5 +1,7 @@
 {
   "navigationBarTitleText": "你挺有球呗",
+  "enableShareAppMessage": true,
+  "enableShareTimeline": true,
   "usingComponents": {
     "match-card": "../../components/match-card/index"
   }

@@ -2,9 +2,10 @@ const { restoreSession } = require("./services/api");
 
 App({
   globalData: {
-    apiBaseUrl: "http://39.102.100.241/api",
+    apiBaseUrl: "https://niyoushashilia.cloud/api",
     token: "",
-    user: null
+    user: null,
+    currentTabKey: "home"
   },
   onLaunch() {
     restoreSession();

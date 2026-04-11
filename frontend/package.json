@@ -4,6 +4,7 @@
   "private": true,
   "description": "你挺有球呗微信小程序",
   "scripts": {
+    "test": "node --test tests/*.test.js",
     "typecheck": "echo \"Use WeChat DevTools to compile TypeScript\""
   },
   "devDependencies": {
