@@ -1,175 +1,232 @@
 # 你挺有球呗
 
-朋友小圈子用的微信小程序，支持记录台球、羽毛球、乒乓球对战，包含微信登录、待确认机制、排行榜和我的战绩页。
+一个给熟人球局使用的微信小程序，围绕“记录比赛、对手确认、生效统计、月榜查看”来组织体验。当前支持台球、羽毛球、乒乓球三类项目，前后端分离，后端提供比赛、登录、排行榜和个人数据接口，前端使用原生微信小程序承接完整流程。
 
-## 目录结构
+## 功能概览
 
-- `backend`: Java + Spring Boot 后端，使用 H2 文件数据库做本地持久化，内置种子数据
-- `frontend`: 原生微信小程序 + TypeScript 前端，按前后端分离方式请求后端 API
+- 微信登录与会话管理
+- 首页公开浏览最新已确认球局
+- 按球类查看自然月月榜
+- 发起比赛记录、对手确认、拒绝、取消
+- 我的战绩、球友详情、最近比赛
+- 头像上传与个人资料初始化
 
-## 后端启动
+## 技术栈
 
-本地环境按仓库内实现使用 `Java 17 + Maven 3.8+`，代码结构兼容后续升级到 Java 21。
+### Backend
+
+- Java 17
+- Spring Boot 3
+- Spring Web / Spring Data JPA
+- H2 文件数据库
+- Maven
+
+### Frontend
+
+- 原生微信小程序
+- TypeScript + 运行时 `.js`
+- 自定义 TabBar
+- Node.js 内置测试运行器
+
+## 项目结构
+
+```text
+.
+├── backend
+│   ├── src/main/java/com/ntyqb/backend
+│   │   ├── config
+│   │   ├── controller
+│   │   ├── dto
+│   │   ├── entity
+│   │   ├── exception
+│   │   ├── repository
+│   │   └── service
+│   └── src/test/java/com/ntyqb/backend
+├── frontend
+│   ├── miniprogram
+│   │   ├── components
+│   │   ├── custom-tab-bar
+│   │   ├── pages
+│   │   ├── services
+│   │   ├── types
+│   │   └── utils
+│   └── tests
+└── docs
+```
+
+## 架构图
+
+```mermaid
+graph TD
+    U[微信用户] --> MP[微信小程序]
+    MP --> P1[首页 / 排行榜 / 记录 / 我的 / 球友页]
+    P1 --> API[services/api]
+    API --> HTTP[HTTPS API]
+
+    HTTP --> C1[AuthController]
+    HTTP --> C2[MatchController]
+    HTTP --> C3[LeaderboardController]
+    HTTP --> C4[MeController / UserController]
+    HTTP --> C5[UploadController]
+
+    C1 --> S1[AuthService]
+    C2 --> S2[MatchService]
+    C3 --> S3[LeaderboardService]
+    C4 --> S4[UserService]
+    C5 --> S5[AvatarStorageService]
+
+    S1 --> WX[WechatAuthClient]
+    S1 --> R1[UserRepository]
+    S1 --> R2[SessionTokenRepository]
+    S2 --> R1
+    S2 --> R3[MatchRecordRepository]
+    S2 --> R4[SportStatsRepository]
+    S3 --> R3
+    S3 --> R4
+    S4 --> R1
+    S5 --> FS[(uploads 目录)]
+
+    R1 --> DB[(H2 文件数据库)]
+    R2 --> DB
+    R3 --> DB
+    R4 --> DB
+```
+
+## 核心数据流
+
+### 1. 登录链路
+
+```mermaid
+sequenceDiagram
+    participant User as 用户
+    participant Mini as 小程序
+    participant Wx as 微信
+    participant API as Backend API
+    participant Wechat as WechatAuthClient
+    participant DB as H2
+
+    User->>Mini: 点击登录
+    Mini->>Wx: wx.login()
+    Wx-->>Mini: code
+    Mini->>API: POST /api/auth/wechat/login
+    API->>Wechat: jscode2session(code)
+    Wechat-->>API: openid
+    API->>DB: 查找或创建用户 + 创建 session token
+    API-->>Mini: token + user
+    Mini->>API: GET /api/me
+    API-->>Mini: 我的资料 / 统计 / 待确认
+```
+
+### 2. 比赛记录链路
+
+```mermaid
+sequenceDiagram
+    participant A as 发起人
+    participant Mini as 小程序
+    participant API as Backend API
+    participant DB as H2
+    participant B as 对手
+
+    A->>Mini: 提交比赛记录
+    Mini->>API: POST /api/matches
+    API->>DB: 保存 MatchRecord + MatchParticipant
+    API-->>Mini: 返回待确认比赛
+
+    B->>Mini: 确认 / 拒绝
+    Mini->>API: POST /api/matches/{id}/confirm or reject
+    API->>DB: 更新参与人状态、比赛状态、统计
+    API-->>Mini: 返回最新比赛详情
+```
+
+## 核心模块
+
+### 后端
+
+- `controller`
+  - 对外暴露 REST API，覆盖登录、比赛、排行榜、我的资料、球友资料、头像上传。
+- `service`
+  - 承载业务规则。
+  - `AuthService` 负责登录、会话、当前用户解析。
+  - `MatchService` 负责比赛创建、确认、取消、查询。
+  - `LeaderboardService` 负责自然月月榜聚合。
+  - `AvatarStorageService` 负责头像落盘与访问路径生成。
+  - `WechatAuthClient` 负责调用微信 `jscode2session`。
+- `repository`
+  - JPA 数据访问层，围绕用户、会话、比赛、统计四类核心数据。
+- `entity`
+  - 抽象比赛、参赛人、用户、会话、统计等领域对象。
+
+### 前端
+
+- `pages/home`
+  - 首屏入口，支持游客浏览公开球局。
+- `pages/leaderboard`
+  - 自然月月榜，支持游客浏览。
+- `pages/records`
+  - 登录后发起和管理比赛记录。
+- `pages/profile`
+  - 登录后查看个人资料、统计和战绩。
+- `pages/player`
+  - 查看球友详情和对应球类战绩。
+- `pages/auth`
+  - 用户主动触发时进入的授权登录页。
+- `services/api`
+  - 统一封装 token、请求、鉴权失败处理、登录回跳。
+- `utils`
+  - 处理登录回跳、页面刷新状态、头像链接、分享配置等页面基础能力。
+
+## 当前业务规则
+
+- 首页和排行榜支持未登录浏览。
+- 记录页、我的页、球友详情页需要登录后使用。
+- 排行榜为自然月口径，不是累计总榜。
+- 比赛只有在确认生效后才会进入统计和月榜。
+- 小程序分享已开启，首页、月榜、记录页、我的页、球友页都支持分享。
+
+## 本地开发
+
+### 1. 启动后端
 
 ```bash
 cd backend
 mvn spring-boot:run
 ```
 
-后端默认地址：
+默认地址：
 
 - API: `http://127.0.0.1:8080/api`
+- Health: `http://127.0.0.1:8080/api/health`
 - H2 Console: `http://127.0.0.1:8080/h2-console`
 
-默认配置见 [application.yml](/Users/zhangliyuan/codexprojects/ntyqb/backend/src/main/resources/application.yml)。
+### 2. 启动小程序
 
-### 后端验证
+1. 用微信开发者工具打开 `frontend`
+2. 编译运行小程序
+3. 当前默认请求地址配置在 `frontend/miniprogram/app.ts`
+
+说明：
+
+- 当前仓库中的小程序默认 API 地址指向线上域名 `https://niyoushashilia.cloud/api`
+- 如果需要本地联调，请把 `frontend/miniprogram/app.ts` 和 `frontend/miniprogram/services/api.ts` 中的默认地址切回本地服务
+
+## 测试
+
+### 后端测试
 
 ```bash
 cd backend
 mvn -Dmaven.repo.local=/Users/zhangliyuan/codexprojects/ntyqb/.m2 test
 ```
 
-## 小程序启动
+### 前端测试
 
-1. 用微信开发者工具打开目录 `frontend`
-2. 在开发者工具中开启“不校验合法域名”
-3. 当前默认联调后端地址为 `https://niyoushashilia.cloud/api`
-4. 直接编译运行
+```bash
+cd frontend
+npm test
+```
 
-如果你临时要切回本地后端，把 [app.ts](/Users/zhangliyuan/codexprojects/ntyqb/frontend/miniprogram/app.ts) 和 [api.ts](/Users/zhangliyuan/codexprojects/ntyqb/frontend/miniprogram/services/api.ts) 里的默认地址改回本地即可。
+## 补充说明
 
-小程序当前默认使用 `mock` 登录模式：
-
-- 冷启动会先进入独立的微信授权页
-- 首次授权需要选择头像、填写昵称，再点击“微信授权进入”
-- 后续重新登录会直接复用上次确认过的头像和昵称，不再重复填写
-- 前端会按 `wx.login -> /api/auth/wechat/login -> /api/me` 顺序完成登录
-- 后端继续使用固定 `mockUserKey=local-demo-user` 识别本地调试用户
-- 登录后即可看到预置的球友、排行榜和待确认记录
-
-## 已实现能力
-
-- 微信登录 / 登出接口与前端登录态接入
-- 台球单打、羽毛球单双打、乒乓球单打记录创建
-- 发起后待对手确认生效，支持确认 / 拒绝 / 取消 / 过期状态
-- 按球类排行榜，区分正式榜和暂不入榜
-- 首页、排行榜、记录、我的四个 Tab 页
-- 独立授权登录页和原生 TabBar 图标
-- 我的页和球友详情页的球类统计与比赛记录
-
-## 生产发布清单
-
-下面这份清单按“把这个项目真正发出去”整理，优先级已经按实际推进顺序排好了。
-
-### 1. 先准备账号和资质
-
-- 申请并完成微信小程序主体注册、认证
-- 明确小程序名称、简介、头像、服务类目、管理员
-- 准备隐私政策、用户协议、客服联系信息
-- 如果计划正式商用，提前确认主体是个人还是企业
-
-### 2. 准备云资源
-
-- 购买 1 台可公网访问的服务器，至少能跑 `Java 17 + Spring Boot`
-- 购买 1 个域名，作为后端 API 域名，例如 `api.xxx.com`
-- 给域名申请 SSL 证书，保证后端接口走 `HTTPS`
-- 做域名解析，把域名指向服务器或反向代理入口
-- 如果服务器部署在中国大陆，通常需要先完成 ICP 备案
-
-### 3. 把后端从“本地调试模式”切到“生产模式”
-
-这个仓库当前默认还是本地开发配置，上线前至少要改下面几项：
-
-- 把 [application.yml](/Users/zhangliyuan/codexprojects/ntyqb/backend/src/main/resources/application.yml) 里的 `app.auth.mode` 从 `mock` 改成真实微信登录模式
-- 把微信登录实现接到真实 `code2Session`，不要再依赖 `mockUserKey`
-- 把数据库从 H2 文件库切到 MySQL 或 PostgreSQL
-- 关闭 H2 Console：`spring.h2.console.enabled=false`
-- 关闭启动种子数据：`app.seed.enabled=false`
-- 收紧跨域配置，不要继续保留 `allowedOrigins("*")`
-- 增加生产环境配置文件，例如 `application-prod.yml`
-- 配置日志落盘、异常告警、数据库备份
-
-### 4. 这个项目里需要直接改掉的发布阻塞项
-
-- 前端请求地址现在默认使用正式域名 [app.ts](/Users/zhangliyuan/codexprojects/ntyqb/frontend/miniprogram/app.ts) 和 [api.js](/Users/zhangliyuan/codexprojects/ntyqb/frontend/miniprogram/services/api.js) 里的 `https://niyoushashilia.cloud/api`，如需本地联调再临时改回 `http://127.0.0.1:8080/api`
-- 前端不能再依赖开发者工具里的“`不校验合法域名`”
-- 后端当前 CORS 允许全部来源，配置在 [WebConfig.java](/Users/zhangliyuan/codexprojects/ntyqb/backend/src/main/java/com/ntyqb/backend/config/WebConfig.java)，上线前要改成你的正式小程序请求来源策略
-- 当前登录流程是“开发期模拟微信资料 + mock 登录”，要改成真实微信登录闭环
-
-### 5. 配置微信公众平台
-
-- 在微信公众平台后台配置 `request` 合法域名
-- 如果后面有文件上传、下载、WebSocket，再补充对应合法域名
-- 配置小程序隐私保护指引
-- 补齐类目、简介、头像、服务范围、客服信息
-- 如果使用地图、手机号、支付等能力，再按需补充对应权限和配置
-
-### 6. 发布前测试
-
-- 准备至少 3 套环境：本地开发、预发布、正式生产
-- 用体验版完整走一遍：登录、发起记录、对手确认、排行榜、我的页
-- 检查所有网络请求是否都走正式 `HTTPS` 域名
-- 检查 token 失效、接口报错、空数据、弱网场景
-- 核对隐私政策入口、登录说明、用户数据处理说明
-- 让 2 到 3 个真实用户用体验版试用
-
-### 7. 微信提审和上线
-
-- 在微信开发者工具上传代码
-- 生成体验版，先给测试微信号试用
-- 修完问题后提交审核
-- 审核通过后再点发布
-- 首次上线后重点盯登录、记录创建、确认流转、排行榜统计是否正常
-
-### 8. 上线后建议补的运维能力
-
-- 域名和 SSL 证书到期提醒
-- 数据库自动备份
-- 应用日志检索
-- 服务监控和告警
-- 版本发布记录
-- 管理员人工处理异常战绩的后台能力
-
-## 当前项目的上线 TODO
-
-- [ ] 申请微信小程序主体并完成认证
-- [ ] 购买服务器
-- [ ] 购买域名
-- [ ] 完成域名解析
-- [ ] 申请并部署 SSL 证书
-- [ ] 如果部署在中国大陆，完成 ICP 备案
-- [ ] 部署 MySQL 或 PostgreSQL
-- [ ] 增加 `application-prod.yml`
-- [ ] 把后端从 `mock` 登录改成真实微信 `code2Session`
-- [ ] 关闭 H2 Console
-- [ ] 关闭种子数据
-- [ ] 收紧 CORS
-- [x] 把前端 API 地址改成正式 `https` 域名
-- [ ] 在微信公众平台配置合法域名
-- [ ] 配置隐私保护指引
-- [ ] 上传体验版并做真机测试
-- [ ] 提交微信审核
-- [ ] 审核通过后正式发布
-
-## 我建议你的推进顺序
-
-1. 先申请小程序主体、买服务器、买域名
-2. 把后端切到生产配置，完成 HTTPS 和数据库迁移
-3. 把登录从 `mock` 换成真实微信登录
-4. 改前端正式 API 域名并接入微信后台合法域名
-5. 走体验版联调
-6. 提审并发布
-
-## 参考资料
-
-- 腾讯云个人实名认证指引：https://www.tencentcloud.com/zh/document/product/378/10495
-- 腾讯云关于中国大陆资源与备案的说明示例：https://www.tencentcloud.com/document/product/627/11731
-- 腾讯云关于自定义域名与 HTTPS 的说明示例：https://www.tencentcloud.com/document/product/1051/43983
-- 微信小程序版本流转说明参考：https://cloud.tencent.com/developer/article/1173189
-- 微信小程序合法域名与 HTTPS 配置参考：https://cloud.tencent.com/developer/article/1989933
-
-## 说明
-
-- 开发期数据来自 H2 本地数据库和启动种子数据，不依赖外部数据库
-- 生产接入真实微信 `code2Session` 时，只需替换登录实现，不影响主要接口和页面结构
+- 后端当前使用 H2 文件数据库，适合轻量开发和单机部署。
+- 数据种子、用户标签、认证模式等配置都放在 `backend/src/main/resources/application.yml`。
+- 微信登录依赖小程序 `appid` 和 `app secret`，线上需要在后端配置中提供。
