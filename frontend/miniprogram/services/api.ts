@@ -9,18 +9,27 @@ import type {
   SportType,
   UserSummary
 } from "../types/models";
+import {
+  AUTH_PAGE_URL,
+  HOME_PAGE_URL,
+  normalizeAuthRedirectTarget,
+  resolvePostLoginNavigation
+} from "../utils/auth-redirect";
 
 const TOKEN_KEY = "ntyqb_token";
 const MOCK_USER_KEY = "ntyqb_mock_user_key";
 const AUTH_PROFILE_KEY = "ntyqb_auth_profile";
+const AUTH_REDIRECT_KEY = "ntyqb_auth_redirect";
 const DEFAULT_API_BASE_URL = "https://niyoushashilia.cloud/api";
-const AUTH_PAGE_URL = "/pages/auth/index";
-const HOME_PAGE_URL = "/pages/home/index";
 
 interface RequestOptions {
   method?: "GET" | "POST";
   url: string;
   data?: Record<string, any> | string;
+  needAuth?: boolean;
+}
+
+interface RequestPolicyOptions {
   needAuth?: boolean;
 }
 
@@ -41,6 +50,16 @@ export interface SavedAuthProfile {
   avatarUrl: string;
 }
 
+interface AvatarUploadResponse {
+  avatarUrl: string;
+}
+
+type AuthErrorCode = "AUTH_REQUIRED" | "AUTH_EXPIRED";
+
+interface AuthError extends Error {
+  code?: AuthErrorCode;
+}
+
 export function getStoredToken(): string {
   try {
     return wx.getStorageSync(TOKEN_KEY) || "";
@@ -56,6 +75,10 @@ export function hasToken(): boolean {
     app.globalData.token = token;
   }
   return Boolean(token);
+}
+
+export function isLoggedIn(): boolean {
+  return hasToken();
 }
 
 export function getSavedAuthProfile(): SavedAuthProfile | null {
@@ -82,8 +105,9 @@ function getMockUserKey(): string {
   if (stored) {
     return stored;
   }
-  wx.setStorageSync(MOCK_USER_KEY, "local-demo-user");
-  return "local-demo-user";
+  const generated = `mock-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+  wx.setStorageSync(MOCK_USER_KEY, generated);
+  return generated;
 }
 
 function setToken(token: string) {
@@ -134,20 +158,19 @@ export function restoreSession() {
 }
 
 export function requireAuthPage(): boolean {
-  if (hasToken()) {
-    return true;
-  }
-  redirectToAuth();
-  return false;
+  return hasToken();
 }
 
-export function redirectToAuth() {
+export function navigateToAuth(options: { targetUrl?: string } = {}) {
   const currentRoute = getCurrentRoute();
   if (currentRoute === "pages/auth/index") {
     return;
   }
-  wx.reLaunch({
-    url: AUTH_PAGE_URL
+
+  const targetUrl = normalizeAuthRedirectTarget(options.targetUrl || getCurrentPageUrl());
+  wx.setStorageSync(AUTH_REDIRECT_KEY, targetUrl);
+  wx.navigateTo({
+    url: `${AUTH_PAGE_URL}?redirect=${encodeURIComponent(targetUrl)}`
   });
 }
 
@@ -155,6 +178,21 @@ export function switchToHome() {
   wx.switchTab({
     url: HOME_PAGE_URL
   });
+}
+
+export function completeAuthNavigation(fallbackUrl?: string) {
+  const targetUrl = getPendingAuthRedirect();
+  clearPendingAuthRedirect();
+  const destination = resolvePostLoginNavigation(targetUrl || fallbackUrl || HOME_PAGE_URL);
+  if (destination.method === "switchTab") {
+    wx.switchTab({ url: destination.url });
+    return;
+  }
+  wx.redirectTo({ url: destination.url });
+}
+
+export function cancelAuthNavigation() {
+  clearPendingAuthRedirect();
 }
 
 export async function loginWithWechatProfile(payload: LoginPayload): Promise<LoginResponse> {
@@ -165,6 +203,9 @@ export async function loginWithWechatProfile(payload: LoginPayload): Promise<Log
     throw new Error("请先选择微信头像");
   }
 
+  const avatarUrl = needsAvatarUpload(payload.avatarUrl.trim())
+    ? await uploadAvatar(payload.avatarUrl.trim())
+    : payload.avatarUrl.trim();
   const loginResult = await wxpLogin();
   const response = await request<LoginResponse>({
     method: "POST",
@@ -173,7 +214,7 @@ export async function loginWithWechatProfile(payload: LoginPayload): Promise<Log
     data: {
       code: loginResult.code,
       nickname: payload.nickname.trim(),
-      avatarUrl: payload.avatarUrl.trim(),
+      avatarUrl,
       mockUserKey: getMockUserKey()
     }
   });
@@ -190,7 +231,8 @@ export async function logout(): Promise<void> {
     }
   } finally {
     clearAuth();
-    redirectToAuth();
+    clearPendingAuthRedirect();
+    switchToHome();
   }
 }
 
@@ -212,12 +254,18 @@ export async function createMatch(payload: CreateMatchPayload): Promise<MatchDet
   return request<MatchDetail>({ method: "POST", url: "/matches", data: payload });
 }
 
-export async function listMatches(params: Record<string, string>): Promise<MatchListResponse> {
+export async function listMatches(
+  params: Record<string, string>,
+  options: RequestPolicyOptions = {}
+): Promise<MatchListResponse> {
   const query = Object.entries(params)
     .filter(([, value]) => value)
     .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
     .join("&");
-  return request<MatchListResponse>({ url: `/matches${query ? `?${query}` : ""}` });
+  return request<MatchListResponse>({
+    url: `/matches${query ? `?${query}` : ""}`,
+    needAuth: options.needAuth ?? true
+  });
 }
 
 export async function confirmMatch(matchId: number): Promise<MatchDetail> {
@@ -232,8 +280,14 @@ export async function cancelMatch(matchId: number): Promise<MatchDetail> {
   return request<MatchDetail>({ method: "POST", url: `/matches/${matchId}/cancel` });
 }
 
-export async function getLeaderboard(sportType: SportType): Promise<LeaderboardResponse> {
-  return request<LeaderboardResponse>({ url: `/leaderboards?sportType=${sportType}` });
+export async function getLeaderboard(
+  sportType: SportType,
+  options: RequestPolicyOptions = {}
+): Promise<LeaderboardResponse> {
+  return request<LeaderboardResponse>({
+    url: `/leaderboards?sportType=${sportType}`,
+    needAuth: options.needAuth ?? true
+  });
 }
 
 export async function getPlayerProfile(userId: number, sportType: SportType): Promise<PlayerProfile> {
@@ -248,8 +302,7 @@ async function request<T>({
 }: RequestOptions): Promise<T> {
   const app = getAppSafe();
   if (needAuth && !hasToken()) {
-    redirectToAuth();
-    throw new Error("请先完成微信授权登录");
+    throw createAuthError("请先登录后使用该功能", "AUTH_REQUIRED");
   }
 
   return new Promise<T>((resolve, reject) => {
@@ -264,8 +317,7 @@ async function request<T>({
       success: (response) => {
         if (response.statusCode === 401 && needAuth) {
           clearAuth();
-          redirectToAuth();
-          reject(new Error("登录已失效，请重新授权"));
+          reject(createAuthError("登录已失效，请重新登录", "AUTH_EXPIRED"));
           return;
         }
         if (response.statusCode >= 200 && response.statusCode < 300) {
@@ -299,6 +351,89 @@ function getCurrentRoute(): string {
   } catch (error) {
     return "";
   }
+}
+
+function getCurrentPageUrl(): string {
+  try {
+    const pages = getCurrentPages();
+    if (!pages.length) {
+      return HOME_PAGE_URL;
+    }
+    const currentPage = pages[pages.length - 1];
+    const route = currentPage.route || "";
+    const options = currentPage.options || {};
+    const query = Object.entries(options)
+      .filter(([, value]) => value !== undefined && value !== null && `${value}` !== "")
+      .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(String(value))}`)
+      .join("&");
+    const basePath = route ? `/${route}` : HOME_PAGE_URL;
+    return query ? `${basePath}?${query}` : basePath;
+  } catch (error) {
+    return HOME_PAGE_URL;
+  }
+}
+
+function getPendingAuthRedirect(): string {
+  try {
+    return normalizeAuthRedirectTarget(wx.getStorageSync(AUTH_REDIRECT_KEY) || HOME_PAGE_URL);
+  } catch (error) {
+    return HOME_PAGE_URL;
+  }
+}
+
+function clearPendingAuthRedirect() {
+  wx.removeStorageSync(AUTH_REDIRECT_KEY);
+}
+
+function createAuthError(message: string, code: AuthErrorCode): AuthError {
+  const error = new Error(message) as AuthError;
+  error.code = code;
+  return error;
+}
+
+export function isAuthError(error: any, code?: AuthErrorCode): boolean {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+  const errorCode = (error as AuthError).code;
+  if (!errorCode) {
+    return false;
+  }
+  return code ? errorCode === code : errorCode === "AUTH_REQUIRED" || errorCode === "AUTH_EXPIRED";
+}
+
+function needsAvatarUpload(avatarUrl: string): boolean {
+  const { isTemporaryAvatarUrl } = require("../utils/avatar-url");
+  return isTemporaryAvatarUrl(avatarUrl);
+}
+
+async function uploadAvatar(filePath: string): Promise<string> {
+  const app = getAppSafe();
+  const apiBaseUrl = (app.globalData.apiBaseUrl || DEFAULT_API_BASE_URL).replace(/\/$/, "");
+  return new Promise((resolve, reject) => {
+    wx.uploadFile({
+      url: `${apiBaseUrl}/uploads/avatar`,
+      filePath,
+      name: "file",
+      success(response) {
+        let data: AvatarUploadResponse | { message?: string } = { avatarUrl: "" };
+        try {
+          data = JSON.parse(response.data || "{}");
+        } catch (error) {
+          reject(new Error("头像上传失败，请重新选择头像"));
+          return;
+        }
+        if (response.statusCode >= 200 && response.statusCode < 300 && "avatarUrl" in data && data.avatarUrl) {
+          resolve(data.avatarUrl);
+          return;
+        }
+        reject(new Error(data.message || "头像上传失败，请重新选择头像"));
+      },
+      fail() {
+        reject(new Error("头像上传失败，请重新选择头像"));
+      }
+    });
+  });
 }
 
 function getAppSafe(required = true): IAppOption | null {

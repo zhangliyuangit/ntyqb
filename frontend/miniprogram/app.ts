@@ -4,7 +4,8 @@ App<IAppOption>({
   globalData: {
     apiBaseUrl: "https://niyoushashilia.cloud/api",
     token: "",
-    user: null
+    user: null,
+    currentTabKey: "home"
   },
   onLaunch() {
     restoreSession();

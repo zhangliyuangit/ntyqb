@@ -11,15 +11,18 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.mock.web.MockMultipartFile;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -173,6 +176,66 @@ class ApplicationApiTests {
     }
 
     @Test
+    void shouldAllowAnonymousConfirmedHomeFeed() throws Exception {
+        mockMvc.perform(get("/api/matches")
+                        .param("scope", "all")
+                        .param("status", "CONFIRMED"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items").isArray());
+    }
+
+    @Test
+    void shouldAllowAnonymousLeaderboardBrowse() throws Exception {
+        mockMvc.perform(get("/api/leaderboards")
+                        .param("sportType", "BILLIARDS"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.sportType").value("BILLIARDS"))
+                .andExpect(jsonPath("$.ranked").isArray());
+    }
+
+    @Test
+    void shouldOnlyCountConfirmedMatchesFromCurrentNaturalMonthInLeaderboard() throws Exception {
+        LocalDateTime oldMonthTime = LocalDateTime.now()
+                .withDayOfMonth(1)
+                .minusDays(1)
+                .withHour(20)
+                .withMinute(0)
+                .withSecond(0)
+                .withNano(0);
+        List<MatchRecord> oldMonthMatches = matchRecordRepository.findAllVisible(
+                        com.ntyqb.backend.entity.SportType.BILLIARDS,
+                        com.ntyqb.backend.entity.MatchStatus.CONFIRMED
+                );
+        assertThat(oldMonthMatches).isNotEmpty();
+        for (int index = 0; index < oldMonthMatches.size(); index++) {
+            MatchRecord oldMonthMatch = oldMonthMatches.get(index);
+            LocalDateTime occurredAt = oldMonthTime.minusDays(index);
+            oldMonthMatch.setOccurredAt(occurredAt);
+            oldMonthMatch.setConfirmedAt(occurredAt.plusHours(2));
+        }
+        matchRecordRepository.saveAll(oldMonthMatches);
+
+        String response = mockMvc.perform(get("/api/leaderboards")
+                        .param("sportType", "BILLIARDS"))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        JsonNode leaderboardNode = objectMapper.readTree(response);
+        assertThat(leaderboardNode.path("ranked")).isEmpty();
+        assertThat(leaderboardNode.path("provisional")).isEmpty();
+    }
+
+    @Test
+    void shouldStillRequireLoginForPrivateMatchScopes() throws Exception {
+        mockMvc.perform(get("/api/matches")
+                        .param("scope", "mine"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message").value("请先登录"));
+    }
+
+    @Test
     void shouldLoadMeWhenExpiredPendingMatchesNeedSettlement() throws Exception {
         String demoToken = login("local-demo-user", "阿北", "https://example.com/avatar-demo.png");
 
@@ -203,6 +266,29 @@ class ApplicationApiTests {
                         .param("sportType", "BILLIARDS"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray());
+    }
+
+    @Test
+    void shouldUploadAvatarAndExposeStableUrl() throws Exception {
+        MockMultipartFile avatar = new MockMultipartFile(
+                "file",
+                "avatar.jpg",
+                MediaType.IMAGE_JPEG_VALUE,
+                "fake-avatar-binary".getBytes()
+        );
+
+        String response = mockMvc.perform(multipart("/api/uploads/avatar").file(avatar))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.avatarUrl").value(org.hamcrest.Matchers.containsString("/api/uploads/avatars/")))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        String avatarUrl = objectMapper.readTree(response).path("avatarUrl").asText();
+        String avatarPath = avatarUrl.replace("http://localhost", "");
+
+        mockMvc.perform(get(avatarPath))
+                .andExpect(status().isOk());
     }
 
     @Test
@@ -246,6 +332,26 @@ class ApplicationApiTests {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.user.nickname").value("球王阿北"))
                 .andExpect(jsonPath("$.user.avatarUrl").value("https://example.com/avatar-new.png"));
+    }
+
+    @Test
+    void shouldRefreshTemporaryAvatarProfileOnLaterLogin() throws Exception {
+        String firstToken = login(
+                "local-demo-user",
+                "旧昵称",
+                "http://tmp/edwV2EyA-3nQa947d53a64d7a0b081522ea61de0f304.jpeg"
+        );
+
+        mockMvc.perform(get("/api/me").header("X-Auth-Token", firstToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.user.avatarUrl").value("http://tmp/edwV2EyA-3nQa947d53a64d7a0b081522ea61de0f304.jpeg"));
+
+        String secondToken = login("local-demo-user", "新昵称", "https://example.com/avatar-stable.png");
+
+        mockMvc.perform(get("/api/me").header("X-Auth-Token", secondToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.user.nickname").value("新昵称"))
+                .andExpect(jsonPath("$.user.avatarUrl").value("https://example.com/avatar-stable.png"));
     }
 
     private String login(String mockUserKey, String nickname, String avatarUrl) throws Exception {

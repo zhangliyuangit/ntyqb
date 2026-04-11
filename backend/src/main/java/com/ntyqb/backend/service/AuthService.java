@@ -23,6 +23,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final SessionTokenRepository sessionTokenRepository;
     private final UserTagService userTagService;
+    private final WechatAuthClient wechatAuthClient;
     private final String authMode;
     private final int sessionDays;
 
@@ -30,12 +31,14 @@ public class AuthService {
             UserRepository userRepository,
             SessionTokenRepository sessionTokenRepository,
             UserTagService userTagService,
-            @Value("${app.auth.mode:mock}") String authMode,
+            WechatAuthClient wechatAuthClient,
+            @Value("${app.auth.mode:wechat}") String authMode,
             @Value("${app.auth.session-days:14}") int sessionDays
     ) {
         this.userRepository = userRepository;
         this.sessionTokenRepository = sessionTokenRepository;
         this.userTagService = userTagService;
+        this.wechatAuthClient = wechatAuthClient;
         this.authMode = authMode;
         this.sessionDays = sessionDays;
     }
@@ -114,7 +117,7 @@ public class AuthService {
     }
 
     private User loginWithWechat(AuthDtos.LoginRequest request) {
-        String openId = "wechat:" + request.code();
+        String openId = "wechat:" + wechatAuthClient.resolveOpenId(request.code());
         User user = userRepository.findByOpenId(openId).orElseGet(() -> {
             User created = new User();
             created.setOpenId(openId);
@@ -151,7 +154,18 @@ public class AuthService {
                 || user.getNickname() == null
                 || user.getNickname().isBlank()
                 || user.getAvatarUrl() == null
-                || user.getAvatarUrl().isBlank();
+                || user.getAvatarUrl().isBlank()
+                || isTemporaryAvatarUrl(user.getAvatarUrl());
+    }
+
+    private boolean isTemporaryAvatarUrl(String avatarUrl) {
+        if (avatarUrl == null) {
+            return false;
+        }
+        String value = avatarUrl.trim().toLowerCase();
+        return value.startsWith("http://tmp/")
+                || value.startsWith("https://tmp/")
+                || value.startsWith("wxfile://");
     }
 
     private void syncProfile(User user, AuthDtos.LoginRequest request) {

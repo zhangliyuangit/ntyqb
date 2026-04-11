@@ -1,6 +1,15 @@
 <view class="page">
   <view wx:if="{{loading}}" class="empty">正在加载球友档案…</view>
 
+  <block wx:elif="{{!loggedIn}}">
+    <view class="card player-hero section">
+      <view class="section-kicker">球友详情</view>
+      <view class="hero-name">登录后查看球友战绩</view>
+      <view class="hero-meta">排行榜可以先浏览，进入球友详情页时再授权登录即可。</view>
+      <button class="button-primary player-login-btn" bindtap="onLoginTap">登录后查看详情</button>
+    </view>
+  </block>
+
   <block wx:else>
     <view class="card player-hero section">
       <view class="player-top">

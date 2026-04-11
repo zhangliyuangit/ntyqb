@@ -1,5 +1,7 @@
 {
   "navigationBarTitleText": "记录",
+  "enableShareAppMessage": true,
+  "enableShareTimeline": true,
   "usingComponents": {
     "match-card": "../../components/match-card/index"
   }

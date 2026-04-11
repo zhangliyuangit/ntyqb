@@ -2,6 +2,40 @@
   position: relative;
 }
 
+.auth-gate-card {
+  background:
+    radial-gradient(circle at top right, rgba(7, 193, 96, 0.14), transparent 36%),
+    linear-gradient(160deg, #ffffff 0%, #f4faf6 100%);
+}
+
+.gate-copy {
+  margin-top: 14rpx;
+  color: #6f7d8c;
+  font-size: 24rpx;
+  line-height: 1.7;
+}
+
+.gate-feature-list {
+  margin-top: 24rpx;
+}
+
+.gate-feature {
+  padding: 18rpx 20rpx;
+  border-radius: 18rpx;
+  background: rgba(255, 255, 255, 0.82);
+  border: 1rpx solid rgba(229, 235, 241, 0.92);
+  color: #16212f;
+  font-size: 24rpx;
+}
+
+.gate-feature + .gate-feature {
+  margin-top: 12rpx;
+}
+
+.gate-login-btn {
+  margin-top: 26rpx;
+}
+
 .workflow-strip {
   display: flex;
   gap: 12rpx;

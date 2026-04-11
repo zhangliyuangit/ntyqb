@@ -197,3 +197,8 @@
   width: 100%;
   margin-top: 14rpx;
 }
+
+.browse-button {
+  width: 100%;
+  margin-top: 14rpx;
+}

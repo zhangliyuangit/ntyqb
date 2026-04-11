@@ -13,8 +13,8 @@
 
   <view class="auth-card">
     <view class="auth-head">
-      <view class="auth-title">微信授权登录</view>
-      <view class="auth-desc">{{isFirstAuth ? '首次授权后会固定这份头像和昵称，后续登录直接复用。' : '继续使用上次确认过的微信资料登录。'}}</view>
+      <view class="auth-title">登录后再解锁完整功能</view>
+      <view class="auth-desc">{{isFirstAuth ? '你可以先浏览首页和排行榜；只有在发布比赛记录、查看我的数据时，才需要补充微信头像和昵称完成登录。' : '继续使用上次确认过的微信资料登录，登录后就能发起记录、查看待确认和个人战绩。'}}</view>
     </view>
 
     <block wx:if="{{isFirstAuth}}">
@@ -53,11 +53,15 @@
     <view wx:if="{{errorMessage}}" class="error-panel">{{errorMessage}}</view>
 
     <button class="button-primary auth-button" loading="{{loading}}" disabled="{{loading}}" bindtap="onSubmit">
-      <text class="auth-button-text">{{isFirstAuth ? '微信授权进入' : '继续使用微信登录'}}</text>
+      <text class="auth-button-text">{{isFirstAuth ? '同意并登录' : '继续登录'}}</text>
     </button>
 
     <button wx:if="{{!isFirstAuth}}" class="button-ghost reset-button" bindtap="onResetProfile">
       重新填写头像和昵称
+    </button>
+
+    <button class="button-ghost browse-button" bindtap="onBrowseFirst">
+      先去逛逛
     </button>
   </view>
 </view>

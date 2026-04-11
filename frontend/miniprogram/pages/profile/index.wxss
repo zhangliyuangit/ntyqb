@@ -49,6 +49,10 @@
   color: #647484;
 }
 
+.profile-login-btn {
+  margin-top: 24rpx;
+}
+
 .section-head {
   display: flex;
   align-items: center;

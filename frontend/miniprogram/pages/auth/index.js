@@ -1,12 +1,16 @@
 const {
+  cancelAuthNavigation,
   clearAuth,
   clearSavedAuthProfile,
+  completeAuthNavigation,
   getMe,
   getSavedAuthProfile,
   hasToken,
   loginWithWechatProfile,
   switchToHome
 } = require("../../services/api");
+const { isTemporaryAvatarUrl } = require("../../utils/avatar-url");
+const { buildShareAppMessage, buildShareTimeline, enablePageShareMenu } = require("../../utils/share");
 
 Page({
   data: {
@@ -18,14 +22,30 @@ Page({
     isFirstAuth: true
   },
   onShow() {
+    enablePageShareMenu();
     if (hasToken()) {
-      switchToHome();
+      completeAuthNavigation();
       return;
     }
     this.syncAuthState();
   },
+  onShareAppMessage() {
+    return buildShareAppMessage({
+      title: "来你挺有球呗，先逛首页和月榜",
+      path: "/pages/home/index"
+    });
+  },
+  onShareTimeline() {
+    return buildShareTimeline({
+      title: "来你挺有球呗，先逛首页和月榜",
+      path: "/pages/home/index"
+    });
+  },
   syncAuthState() {
-    const savedProfile = getSavedAuthProfile();
+    const rawSavedProfile = getSavedAuthProfile();
+    const savedProfile = rawSavedProfile && !isTemporaryAvatarUrl(rawSavedProfile.avatarUrl)
+      ? rawSavedProfile
+      : null;
     this.setData({
       savedProfile,
       isFirstAuth: !savedProfile,
@@ -79,7 +99,7 @@ Page({
     try {
       await loginWithWechatProfile(profile);
       await getMe();
-      switchToHome();
+      completeAuthNavigation();
     } catch (error) {
       clearAuth();
       const message = error && error.message ? error.message : "登录失败，请稍后重试";
@@ -91,5 +111,14 @@ Page({
     } finally {
       this.setData({ loading: false });
     }
+  },
+  onBrowseFirst() {
+    cancelAuthNavigation();
+    const pages = getCurrentPages();
+    if (pages.length > 1) {
+      wx.navigateBack();
+      return;
+    }
+    switchToHome();
   }
 });

@@ -4,11 +4,16 @@ import {
   createMatch,
   getMe,
   getRecentPlayers,
+  isAuthError,
+  isLoggedIn,
   listMatches,
+  navigateToAuth,
   rejectMatch,
-  requireAuthPage,
   searchUsers
 } from "../../services/api";
+import { syncTabBarSelection } from "../../custom-tab-bar/state";
+import { beginPageRefresh, failPageRefresh, finishPageRefresh } from "../../utils/page-refresh-state";
+import { buildShareAppMessage, buildShareTimeline, enablePageShareMenu } from "../../utils/share";
 
 const SPORT_OPTIONS = [
   { value: "BILLIARDS", label: "🎱 台球" },
@@ -26,6 +31,9 @@ const STORAGE_KEYS = {
 Page({
   data: {
     loading: true,
+    refreshing: false,
+    pageReady: false,
+    loggedIn: false,
     saving: false,
     createOverlayVisible: false,
     sportOptions: SPORT_OPTIONS,
@@ -50,12 +58,35 @@ Page({
     matches: []
   },
   onShow() {
-    if (!requireAuthPage()) {
-      this.syncTabBarOverlay(false);
-      this.setData({ loading: false });
+    enablePageShareMenu();
+    this.syncTabBarOverlay(false);
+    const loggedIn = isLoggedIn();
+    if (!loggedIn) {
+      this.setData({
+        loading: false,
+        refreshing: false,
+        pageReady: false,
+        loggedIn: false,
+        myUser: null,
+        matches: [],
+        createOverlayVisible: false
+      });
       return;
     }
+    this.setData({ loggedIn: true });
     this.bootstrap();
+  },
+  onShareAppMessage() {
+    return buildShareAppMessage({
+      title: "来你挺有球呗，记录每一场球局",
+      path: "/pages/records/index"
+    });
+  },
+  onShareTimeline() {
+    return buildShareTimeline({
+      title: "来你挺有球呗，记录每一场球局",
+      path: "/pages/records/index"
+    });
   },
   onHide() {
     this.cleanupCreateOverlay();
@@ -65,13 +96,23 @@ Page({
   },
   async bootstrap() {
     this.syncTabBarOverlay(false);
-    this.setData({ loading: true });
+    const hasContent = this.data.pageReady;
+    this.setData({
+      loggedIn: true,
+      ...beginPageRefresh({ hasContent })
+    });
     try {
-      const me = await getMe();
       const presetSport = wx.getStorageSync(STORAGE_KEYS.prefillSport) || this.data.activeSport;
       const presetScope = wx.getStorageSync(STORAGE_KEYS.defaultScope) || this.data.listScope;
       const presetStatus = wx.getStorageSync(STORAGE_KEYS.defaultStatus) || this.data.listStatus;
       const shouldOpenCreateOverlay = !!wx.getStorageSync(STORAGE_KEYS.openCreateOverlay);
+      const [me, response] = await Promise.all([
+        getMe(),
+        listMatches({
+          scope: presetScope,
+          status: presetStatus
+        })
+      ]);
       wx.removeStorageSync(STORAGE_KEYS.prefillSport);
       wx.removeStorageSync(STORAGE_KEYS.defaultScope);
       wx.removeStorageSync(STORAGE_KEYS.defaultStatus);
@@ -82,25 +123,38 @@ Page({
         listScope: presetScope,
         listStatus: presetStatus,
         teamA: [me.user],
-        loading: false
+        matches: response.items,
+        ...finishPageRefresh()
       });
-      await this.loadMatches();
       if (shouldOpenCreateOverlay) {
         await this.openCreateOverlay();
       }
     } catch (error) {
-      this.setData({ loading: false });
+      if (isAuthError(error)) {
+        this.setData({
+          loading: false,
+          refreshing: false,
+          pageReady: false,
+          loggedIn: false,
+          myUser: null,
+          matches: []
+        });
+        return;
+      }
+      this.setData(failPageRefresh({ hasContent }));
       wx.showToast({ title: "记录页加载失败", icon: "none" });
     }
   },
   noop() {},
   syncTabBarOverlay(visible: boolean) {
-    const tabBar = this.getTabBar?.();
-    if (tabBar?.setData) {
-      tabBar.setData({ overlayVisible: visible });
-    }
+    syncTabBarSelection(this, "pages/records/index", { overlayVisible: visible });
   },
   async openCreateOverlay() {
+    if (!isLoggedIn()) {
+      wx.setStorageSync(STORAGE_KEYS.openCreateOverlay, "1");
+      navigateToAuth({ targetUrl: "/pages/records/index" });
+      return;
+    }
     if (!this.data.myUser) {
       wx.showToast({ title: "页面还在加载", icon: "none" });
       return;
@@ -141,6 +195,17 @@ Page({
       });
       this.setData({ matches: response.items });
     } catch (error) {
+      if (isAuthError(error)) {
+        this.setData({
+          loading: false,
+          refreshing: false,
+          pageReady: false,
+          loggedIn: false,
+          myUser: null,
+          matches: []
+        });
+        return;
+      }
       wx.showToast({ title: "记录列表加载失败", icon: "none" });
     }
   },
@@ -299,6 +364,9 @@ Page({
     const nextStatus = event.currentTarget.dataset.status;
     this.setData({ listStatus: this.data.listStatus === nextStatus ? "" : nextStatus });
     await this.loadMatches();
+  },
+  onLoginTap() {
+    navigateToAuth({ targetUrl: "/pages/records/index" });
   },
   applyPlayer(player: any) {
     const teamA = [...this.data.teamA];

@@ -1,39 +1,57 @@
 <view class="page record-page tab-page">
   <view wx:if="{{loading}}" class="empty">正在整理比赛记录…</view>
 
-  <block wx:else>
-    <view class="list-toolbar section">
+  <block wx:elif="{{!loggedIn}}">
+    <view class="card auth-gate-card section">
       <view class="section-kicker">比赛记录</view>
-      <view class="list-toolbar-title">记录归记录，发起归发起</view>
+      <view class="section-title">先看看功能，再决定要不要登录</view>
+      <view class="gate-copy">登录后可以发起比赛记录、查看待你确认的球局，以及管理你发起过的比赛流程。</view>
+      <view class="gate-feature-list">
+        <view class="gate-feature">发起比赛并邀请对手确认</view>
+        <view class="gate-feature">查看“待我确认”和“我发起的”记录</view>
+        <view class="gate-feature">快速复用最近对手和队友</view>
+      </view>
+      <button class="button-primary gate-login-btn" bindtap="onLoginTap">登录后开始记录</button>
     </view>
+  </block>
 
-    <view class="step-card section filter-card">
-      <view class="section-head">
-        <view>
-          <view class="section-title">筛选条件</view>
+  <block wx:else>
+    <view wx:if="{{refreshing}}" class="page-refresh-indicator section">记录同步中...</view>
+
+    <view class="page-stage {{refreshing ? 'is-refreshing' : 'is-settled'}}">
+      <view class="list-toolbar section">
+        <view class="section-kicker">比赛记录</view>
+        <view class="list-toolbar-title">记录归记录，发起归发起</view>
+      </view>
+
+      <view class="step-card section filter-card">
+        <view class="section-head">
+          <view>
+            <view class="section-title">筛选条件</view>
+          </view>
+        </view>
+        <view class="pill-tabs">
+          <view class="pill-tab {{listScope === 'mine' ? 'active' : ''}}" data-scope="mine" bindtap="onScopeTap">我的全部</view>
+          <view class="pill-tab {{listScope === 'pending_confirmation' ? 'active' : ''}}" data-scope="pending_confirmation" bindtap="onScopeTap">待我确认</view>
+          <view class="pill-tab {{listScope === 'initiated' ? 'active' : ''}}" data-scope="initiated" bindtap="onScopeTap">我发起的</view>
+        </view>
+        <view class="pill-tabs status-tabs">
+          <view class="pill-tab {{listStatus === 'PENDING' ? 'active' : ''}}" data-status="PENDING" bindtap="onStatusTap">待确认</view>
+          <view class="pill-tab {{listStatus === 'CONFIRMED' ? 'active' : ''}}" data-status="CONFIRMED" bindtap="onStatusTap">已生效</view>
+          <view class="pill-tab {{listStatus === 'REJECTED' ? 'active' : ''}}" data-status="REJECTED" bindtap="onStatusTap">被拒绝</view>
         </view>
       </view>
-      <view class="pill-tabs">
-        <view class="pill-tab {{listScope === 'mine' ? 'active' : ''}}" data-scope="mine" bindtap="onScopeTap">我的全部</view>
-        <view class="pill-tab {{listScope === 'pending_confirmation' ? 'active' : ''}}" data-scope="pending_confirmation" bindtap="onScopeTap">待我确认</view>
-        <view class="pill-tab {{listScope === 'initiated' ? 'active' : ''}}" data-scope="initiated" bindtap="onScopeTap">我发起的</view>
-      </view>
-      <view class="pill-tabs status-tabs">
-        <view class="pill-tab {{listStatus === 'PENDING' ? 'active' : ''}}" data-status="PENDING" bindtap="onStatusTap">待确认</view>
-        <view class="pill-tab {{listStatus === 'CONFIRMED' ? 'active' : ''}}" data-status="CONFIRMED" bindtap="onStatusTap">已生效</view>
-        <view class="pill-tab {{listStatus === 'REJECTED' ? 'active' : ''}}" data-status="REJECTED" bindtap="onStatusTap">被拒绝</view>
-      </view>
-    </view>
 
-    <view wx:if="{{matches.length === 0}}" class="card empty">暂时没有符合条件的记录</view>
-    <match-card
-      wx:for="{{matches}}"
-      wx:key="id"
-      match="{{item}}"
-      bindconfirm="onMatchConfirm"
-      bindreject="onMatchReject"
-      bindcancel="onMatchCancel"
-    />
+      <view wx:if="{{matches.length === 0}}" class="card empty">暂时没有符合条件的记录</view>
+      <match-card
+        wx:for="{{matches}}"
+        wx:key="id"
+        match="{{item}}"
+        bindconfirm="onMatchConfirm"
+        bindreject="onMatchReject"
+        bindcancel="onMatchCancel"
+      />
+    </view>
   </block>
 
   <view wx:if="{{createOverlayVisible}}" class="create-overlay" catchtouchmove="noop">
