@@ -113,7 +113,7 @@ public class AuthService {
             created.setOpenId("mock:" + mockKey);
             return created;
         });
-        return initializeProfileIfNeeded(user, request);
+        return syncProfileOnLogin(user, request);
     }
 
     private User loginWithWechat(AuthDtos.LoginRequest request) {
@@ -123,7 +123,7 @@ public class AuthService {
             created.setOpenId(openId);
             return created;
         });
-        return initializeProfileIfNeeded(user, request);
+        return syncProfileOnLogin(user, request);
     }
 
     public User requireUser(Long userId) {
@@ -131,31 +131,33 @@ public class AuthService {
                 .orElseThrow(() -> new NotFoundException("用户不存在"));
     }
 
-    private void validateProfile(AuthDtos.LoginRequest request) {
+    private void validateNickname(AuthDtos.LoginRequest request) {
         if (request.nickname() == null || request.nickname().isBlank()) {
             throw new BadRequestException("请先填写微信昵称");
         }
-        if (request.avatarUrl() == null || request.avatarUrl().isBlank()) {
-            throw new BadRequestException("请先选择微信头像");
-        }
     }
 
-    private User initializeProfileIfNeeded(User user, AuthDtos.LoginRequest request) {
-        if (!needsProfileInitialization(user)) {
-            return user;
+    private User syncProfileOnLogin(User user, AuthDtos.LoginRequest request) {
+        validateNickname(request);
+
+        String nickname = request.nickname().trim();
+        String incomingAvatarUrl = normalizeAvatarUrl(request.avatarUrl());
+        String currentAvatarUrl = normalizeAvatarUrl(user.getAvatarUrl());
+        boolean hasIncomingStableAvatar = isStableAvatarUrl(incomingAvatarUrl);
+        boolean hasCurrentStableAvatar = isStableAvatarUrl(currentAvatarUrl);
+
+        if (!hasIncomingStableAvatar && !hasCurrentStableAvatar) {
+            if (incomingAvatarUrl == null) {
+                throw new BadRequestException("请先选择微信头像");
+            }
+            currentAvatarUrl = incomingAvatarUrl;
+        } else if (hasIncomingStableAvatar) {
+            currentAvatarUrl = incomingAvatarUrl;
         }
-        validateProfile(request);
-        syncProfile(user, request);
+
+        user.setNickname(nickname);
+        user.setAvatarUrl(currentAvatarUrl);
         return userRepository.save(user);
-    }
-
-    private boolean needsProfileInitialization(User user) {
-        return user.getId() == null
-                || user.getNickname() == null
-                || user.getNickname().isBlank()
-                || user.getAvatarUrl() == null
-                || user.getAvatarUrl().isBlank()
-                || isTemporaryAvatarUrl(user.getAvatarUrl());
     }
 
     private boolean isTemporaryAvatarUrl(String avatarUrl) {
@@ -168,8 +170,15 @@ public class AuthService {
                 || value.startsWith("wxfile://");
     }
 
-    private void syncProfile(User user, AuthDtos.LoginRequest request) {
-        user.setNickname(request.nickname().trim());
-        user.setAvatarUrl(request.avatarUrl().trim());
+    private boolean isStableAvatarUrl(String avatarUrl) {
+        return avatarUrl != null && !avatarUrl.isBlank() && !isTemporaryAvatarUrl(avatarUrl);
+    }
+
+    private String normalizeAvatarUrl(String avatarUrl) {
+        if (avatarUrl == null) {
+            return null;
+        }
+        String value = avatarUrl.trim();
+        return value.isEmpty() ? null : value;
     }
 }

@@ -318,7 +318,7 @@ class ApplicationApiTests {
     }
 
     @Test
-    void shouldInitializeProfileOnceAndReuseItOnLaterLogin() throws Exception {
+    void shouldRefreshProfileOnLaterLogin() throws Exception {
         String firstToken = login("local-demo-user", "球王阿北", "https://example.com/avatar-new.png");
 
         mockMvc.perform(get("/api/me").header("X-Auth-Token", firstToken))
@@ -330,8 +330,8 @@ class ApplicationApiTests {
 
         mockMvc.perform(get("/api/me").header("X-Auth-Token", secondToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.user.nickname").value("球王阿北"))
-                .andExpect(jsonPath("$.user.avatarUrl").value("https://example.com/avatar-new.png"));
+                .andExpect(jsonPath("$.user.nickname").value("另一个昵称"))
+                .andExpect(jsonPath("$.user.avatarUrl").value("https://example.com/avatar-other.png"));
     }
 
     @Test
@@ -347,6 +347,27 @@ class ApplicationApiTests {
                 .andExpect(jsonPath("$.user.avatarUrl").value("http://tmp/edwV2EyA-3nQa947d53a64d7a0b081522ea61de0f304.jpeg"));
 
         String secondToken = login("local-demo-user", "新昵称", "https://example.com/avatar-stable.png");
+
+        mockMvc.perform(get("/api/me").header("X-Auth-Token", secondToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.user.nickname").value("新昵称"))
+                .andExpect(jsonPath("$.user.avatarUrl").value("https://example.com/avatar-stable.png"));
+    }
+
+    @Test
+    void shouldKeepStableAvatarWhenLaterLoginOnlyProvidesTemporaryAvatar() throws Exception {
+        String firstToken = login("local-demo-user", "稳定昵称", "https://example.com/avatar-stable.png");
+
+        mockMvc.perform(get("/api/me").header("X-Auth-Token", firstToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.user.nickname").value("稳定昵称"))
+                .andExpect(jsonPath("$.user.avatarUrl").value("https://example.com/avatar-stable.png"));
+
+        String secondToken = login(
+                "local-demo-user",
+                "新昵称",
+                "http://tmp/edwV2EyA-3nQa947d53a64d7a0b081522ea61de0f304.jpeg"
+        );
 
         mockMvc.perform(get("/api/me").header("X-Auth-Token", secondToken))
                 .andExpect(status().isOk())

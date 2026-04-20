@@ -48,10 +48,12 @@ class WechatAuthLoginApiTests {
         assertThat(firstLogin.path("authMode").asText()).isEqualTo("wechat");
         assertThat(secondLogin.path("authMode").asText()).isEqualTo("wechat");
         assertThat(firstLogin.path("user").path("id").asLong()).isEqualTo(secondLogin.path("user").path("id").asLong());
+        assertThat(secondLogin.path("user").path("nickname").asText()).isEqualTo("阿北新昵称");
+        assertThat(secondLogin.path("user").path("avatarUrl").asText()).isEqualTo("https://example.com/avatar-b.png");
     }
 
     private JsonNode login(String code, String nickname, String avatarUrl) throws Exception {
-        String response = mockMvc.perform(post("/api/auth/wechat/login")
+        byte[] response = mockMvc.perform(post("/api/auth/wechat/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -64,7 +66,7 @@ class WechatAuthLoginApiTests {
                 .andExpect(jsonPath("$.user.id").isNumber())
                 .andReturn()
                 .getResponse()
-                .getContentAsString();
+                .getContentAsByteArray();
         return objectMapper.readTree(response);
     }
 }
