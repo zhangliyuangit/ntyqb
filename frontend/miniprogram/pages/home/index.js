@@ -1,7 +1,6 @@
 const { getMe, isAuthError, isLoggedIn, listMatches } = require("../../services/api");
 const { syncTabBarSelection } = require("../../custom-tab-bar/state");
 const { beginPageRefresh, failPageRefresh, finishPageRefresh } = require("../../utils/page-refresh-state");
-const { detailSummary, formatDate, sportDisplayLabel, statusLabel, teamText } = require("../../utils/format");
 const { buildShareAppMessage, buildShareTimeline, enablePageShareMenu } = require("../../utils/share");
 
 const SPORT_OPTIONS = [
@@ -9,19 +8,6 @@ const SPORT_OPTIONS = [
   { value: "BADMINTON", label: "🏸 羽毛球" },
   { value: "TABLE_TENNIS", label: "🏓 乒乓球" }
 ];
-
-function buildLatestMatch(match) {
-  if (!match) {
-    return null;
-  }
-  return {
-    sportText: sportDisplayLabel(match.sportType),
-    statusText: statusLabel(match.status),
-    teamLine: `${teamText(match, "A")} vs ${teamText(match, "B")}`,
-    detailText: detailSummary(match),
-    timeText: formatDate(match.occurredAt)
-  };
-}
 
 function findSportStat(stats, sportType) {
   return stats.find((item) => item.sportType === sportType) || null;
@@ -37,7 +23,6 @@ Page({
     matches: [],
     userName: "球友",
     homeSummary: "",
-    latestMatch: null,
     pendingCount: 0,
     sportOptions: SPORT_OPTIONS,
     homeStats: [],
@@ -87,7 +72,6 @@ Page({
           matches: data.items,
           userName: me.user.nickname || "球友",
           homeSummary,
-          latestMatch: buildLatestMatch(data.items[0]),
           pendingCount,
           homeStats: me.stats,
           activeHomeStat: findSportStat(me.stats, this.data.activeStatsSport),
@@ -140,7 +124,6 @@ Page({
       homeSummary: data.items.length
         ? "最近大家都在打球，首页先把最新球局摆在前面。"
         : "暂时还没有新的球局动态。",
-      latestMatch: buildLatestMatch(data.items[0]),
       pendingCount: 0,
       homeStats: [],
       activeHomeStat: null,

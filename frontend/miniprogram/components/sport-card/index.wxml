@@ -24,10 +24,6 @@
       <text class="meta-value">{{stat.rankingPoints}}</text>
     </view>
     <view class="meta-item">
-      <text class="meta-label">净胜</text>
-      <text class="meta-value">{{stat.netValue}}</text>
-    </view>
-    <view class="meta-item">
       <text class="meta-label">近 10 胜</text>
       <text class="meta-value">{{stat.recentTenWins}}</text>
     </view>

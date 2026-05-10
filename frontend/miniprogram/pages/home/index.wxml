@@ -21,26 +21,10 @@
         <view class="notice-text">我说白了，你有啥实力啊？？？</view>
       </view>
 
-      <view wx:if="{{latestMatch}}" class="spotlight section">
-        <view class="section-kicker">刚刚结束</view>
-        <view class="spotlight-head">
-          <view>
-            <view class="spotlight-title">{{latestMatch.sportText}}</view>
-            <view class="spotlight-desc">{{latestMatch.teamLine}}</view>
-          </view>
-          <text class="tag muted">{{latestMatch.statusText}}</text>
-        </view>
-        <view class="spotlight-meta">
-          <text class="spotlight-detail">{{latestMatch.detailText}}</text>
-          <text class="spotlight-time">{{latestMatch.timeText}}</text>
-        </view>
-      </view>
-
       <view wx:if="{{loggedIn}}" class="section home-stats-section">
         <view class="section-head home-stats-head">
           <view>
             <view class="section-title">我的胜率</view>
-            <view class="section-subtitle">按球类切换，只看已确认生效的比赛</view>
           </view>
         </view>
         <view class="pill-tabs home-stats-tabs">

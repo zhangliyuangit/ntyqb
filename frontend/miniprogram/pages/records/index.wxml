@@ -153,9 +153,9 @@
 
           <view wx:if="{{searchResults.length > 0}}" class="player-results">
             <view class="player-results-head">搜索结果 · {{searchResults.length}} 人</view>
-            <scroll-view scroll-y class="player-results-scroll">
-              <view wx:for="{{searchResults}}" wx:key="id" class="player-row" data-player-id="{{item.id}}" bindtap="chooseSearchResult">
-                <view class="player-row-user">
+            <scroll-view scroll-x class="player-results-scroll" bindscroll="onPlayerListScroll">
+              <view class="player-card-track">
+                <view wx:for="{{searchResults}}" wx:key="id" class="player-row" data-player-id="{{item.id}}" bindtap="chooseSearchResult">
                   <image wx:if="{{item.avatarUrl}}" class="player-row-avatar" src="{{item.avatarUrl}}" mode="aspectFill" />
                   <view wx:else class="player-row-avatar placeholder-avatar">球</view>
                   <view class="player-row-main">
@@ -163,19 +163,19 @@
                       <text>{{item.nickname}}</text>
                       <text wx:if="{{item.tag}}" class="user-tag-badge small">{{item.tag}}</text>
                     </view>
-                    <text class="player-row-meta">点一下加入当前空位</text>
+                    <text class="player-row-meta">加入当前空位</text>
                   </view>
+                  <text class="player-row-action">选择</text>
                 </view>
-                <text class="player-row-action">选择</text>
               </view>
             </scroll-view>
           </view>
 
           <view wx:elif="{{availablePlayers.length > 0}}" class="player-results">
             <view class="player-results-head">球友列表 · {{availablePlayers.length}} 人</view>
-            <scroll-view scroll-y class="player-results-scroll">
-              <view wx:for="{{availablePlayers}}" wx:key="id" class="player-row" data-player-id="{{item.id}}" bindtap="chooseAvailablePlayer">
-                <view class="player-row-user">
+            <scroll-view scroll-x class="player-results-scroll" bindscroll="onPlayerListScroll">
+              <view class="player-card-track">
+                <view wx:for="{{availablePlayers}}" wx:key="id" class="player-row" data-player-id="{{item.id}}" bindtap="chooseAvailablePlayer">
                   <image wx:if="{{item.avatarUrl}}" class="player-row-avatar" src="{{item.avatarUrl}}" mode="aspectFill" />
                   <view wx:else class="player-row-avatar placeholder-avatar">球</view>
                   <view class="player-row-main">
@@ -185,8 +185,8 @@
                     </view>
                     <text class="player-row-meta">{{activeSport === 'BADMINTON' && format === 'DOUBLES' ? '先补我方，再补对方' : '将添加为对手'}}</text>
                   </view>
+                  <text class="player-row-action">选择</text>
                 </view>
-                <text class="player-row-action">选择</text>
               </view>
             </scroll-view>
           </view>

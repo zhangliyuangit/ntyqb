@@ -13,6 +13,7 @@ const {
 const { syncTabBarSelection } = require("../../custom-tab-bar/state");
 const { beginPageRefresh, failPageRefresh, finishPageRefresh } = require("../../utils/page-refresh-state");
 const { buildShareAppMessage, buildShareTimeline, enablePageShareMenu } = require("../../utils/share");
+const { haptic } = require("../../utils/haptics");
 
 const SPORT_OPTIONS = [
   { value: "BILLIARDS", label: "🎱 台球" },
@@ -33,6 +34,8 @@ const QUICK_SCORE_OPTIONS = [
   { label: "8:11", aScore: 8, bScore: 11 },
   { label: "9:11", aScore: 9, bScore: 11 }
 ];
+
+const PLAYER_ROW_HAPTIC_STEP = 52;
 
 Page({
   data: {
@@ -339,9 +342,19 @@ Page({
     }
     this.applyPlayer(player);
   },
+  onPlayerListScroll(event) {
+    const scrollOffset = Number(event.detail.scrollLeft || event.detail.scrollTop || 0);
+    const nextTick = Math.floor(scrollOffset / PLAYER_ROW_HAPTIC_STEP);
+    if (this.lastPlayerScrollTick === nextTick) {
+      return;
+    }
+    this.lastPlayerScrollTick = nextTick;
+    haptic("light", 90);
+  },
   removePlayer(event) {
     const team = event.currentTarget.dataset.team;
     const userId = Number(event.currentTarget.dataset.userId);
+    haptic("light");
     if (team === "teamA") {
       this.setData({
         teamA: this.data.teamA.filter((item) => item.id !== userId)
@@ -412,6 +425,7 @@ Page({
     const teamB = [...this.data.teamB];
     const allIds = [...teamA, ...teamB].map((item) => item.id);
     if (allIds.includes(player.id)) {
+      haptic("heavy");
       wx.showToast({ title: "已经选过这个球友", icon: "none" });
       return;
     }
@@ -422,15 +436,18 @@ Page({
     if (teamA.length < aLimit) {
       teamA.push(player);
       this.setData({ teamA });
+      haptic("medium");
       this.refreshScorePreview();
       return;
     }
     if (teamB.length < bLimit) {
       teamB.push(player);
       this.setData({ teamB });
+      haptic("medium");
       this.refreshScorePreview();
       return;
     }
+    haptic("heavy");
     wx.showToast({ title: "参赛人数已满", icon: "none" });
   },
   buildPayload() {

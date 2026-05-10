@@ -31,29 +31,48 @@ test("records create overlay removes redundant recent opponents", () => {
   assert.equal(wxml.includes("最近对手 / 队友"), false);
 });
 
-test("records player picker uses a versus panel and vertical player rows", () => {
+test("records player picker uses a versus panel and horizontal player cards", () => {
   const wxml = read("miniprogram/pages/records/index.wxml");
   const wxss = read("miniprogram/pages/records/index.wxss");
 
   assert.equal(wxml.includes("versus-picker"), true);
   assert.equal(wxml.includes("side-panel"), true);
   assert.equal(wxml.includes("player-row"), true);
-  assert.equal(wxml.includes("scroll-x class=\"available-scroll\""), false);
+  assert.equal(wxml.includes("scroll-x class=\"player-results-scroll\""), true);
+  assert.equal(wxml.includes("player-card-track"), true);
   assert.equal(wxml.includes("recent-card available-card"), false);
   assert.equal(wxss.includes(".versus-picker"), true);
   assert.equal(wxss.includes(".player-row-action"), true);
+  assert.equal(wxss.includes(".player-card-track"), true);
   assert.equal(wxss.includes(".available-card"), false);
 });
 
-test("records player picker keeps long lists scrollable", () => {
+test("records player picker keeps long lists horizontally scrollable", () => {
   const wxml = read("miniprogram/pages/records/index.wxml");
   const wxss = read("miniprogram/pages/records/index.wxss");
 
-  assert.equal(wxml.includes("scroll-y class=\"player-results-scroll\""), true);
+  assert.equal(wxml.includes("scroll-x class=\"player-results-scroll\""), true);
   assert.equal(wxml.includes('wx:elif="{{availablePlayers.length > 0}}"'), true);
   assert.equal(wxml.includes("球友列表 · {{availablePlayers.length}} 人"), true);
   assert.equal(wxss.includes(".player-results-scroll"), true);
-  assert.equal(wxss.includes("max-height: 430rpx"), true);
+  assert.equal(wxss.includes("white-space: nowrap"), true);
+  assert.equal(wxss.includes("width: 220rpx"), true);
+});
+
+test("records player picker adds light haptics while scrolling and selecting", () => {
+  const source = read("miniprogram/pages/records/index.ts");
+  const wxml = read("miniprogram/pages/records/index.wxml");
+  const haptics = read("miniprogram/utils/haptics.ts");
+
+  assert.equal(source.includes('import { haptic } from "../../utils/haptics"'), true);
+  assert.equal(source.includes("onPlayerListScroll"), true);
+  assert.equal(source.includes("event.detail.scrollLeft"), true);
+  assert.equal(source.includes('haptic("light", 90)'), true);
+  assert.equal(source.includes('haptic("medium")'), true);
+  assert.equal(source.includes('haptic("heavy")'), true);
+  assert.equal(wxml.includes('bindscroll="onPlayerListScroll"'), true);
+  assert.equal(haptics.includes("wx.vibrateShort"), true);
+  assert.equal(haptics.includes("minIntervalMs"), true);
 });
 
 test("records create overlay supports single-game racket matches", () => {

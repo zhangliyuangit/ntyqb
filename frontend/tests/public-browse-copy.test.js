@@ -26,8 +26,20 @@ test("home win-rate module uses sport tabs and the shared sport card", () => {
   assert.match(homeWxml, /我的胜率/);
   assert.match(homeWxml, /onStatsSportTap/);
   assert.match(homeWxml, /<sport-card wx:if="{{activeHomeStat}}"/);
+  assert.equal(homeWxml.includes("按球类切换，只看已确认生效的比赛"), false);
   assert.match(homeJson, /"sport-card"/);
   assert.match(homeTs, /activeStatsSport: "BILLIARDS"/);
+});
+
+test("home page does not render the latest match spotlight block", () => {
+  const homeWxml = read("miniprogram/pages/home/index.wxml");
+  const homeWxss = read("miniprogram/pages/home/index.wxss");
+  const homeTs = read("miniprogram/pages/home/index.ts");
+
+  assert.equal(homeWxml.includes("刚刚结束"), false);
+  assert.equal(homeWxml.includes("latestMatch"), false);
+  assert.equal(homeWxss.includes(".spotlight"), false);
+  assert.equal(homeTs.includes("buildLatestMatch"), false);
 });
 
 test("sport card uses a compact rate panel instead of a progress bar", () => {
@@ -36,6 +48,8 @@ test("sport card uses a compact rate panel instead of a progress bar", () => {
 
   assert.match(sportCardWxml, /rate-panel/);
   assert.match(sportCardWxml, /rate-label/);
+  assert.equal(sportCardWxml.includes("净胜"), false);
+  assert.match(sportCardWxml, /近 10 胜/);
   assert.equal(sportCardWxml.includes("rate-track"), false);
   assert.equal(sportCardWxml.includes("rate-fill"), false);
   assert.equal(sportCardWxss.includes(".rate-track"), false);
