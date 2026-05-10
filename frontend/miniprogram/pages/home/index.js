@@ -4,6 +4,12 @@ const { beginPageRefresh, failPageRefresh, finishPageRefresh } = require("../../
 const { detailSummary, formatDate, sportDisplayLabel, statusLabel, teamText } = require("../../utils/format");
 const { buildShareAppMessage, buildShareTimeline, enablePageShareMenu } = require("../../utils/share");
 
+const SPORT_OPTIONS = [
+  { value: "BILLIARDS", label: "🎱 台球" },
+  { value: "BADMINTON", label: "🏸 羽毛球" },
+  { value: "TABLE_TENNIS", label: "🏓 乒乓球" }
+];
+
 function buildLatestMatch(match) {
   if (!match) {
     return null;
@@ -17,6 +23,10 @@ function buildLatestMatch(match) {
   };
 }
 
+function findSportStat(stats, sportType) {
+  return stats.find((item) => item.sportType === sportType) || null;
+}
+
 Page({
   data: {
     loading: true,
@@ -28,7 +38,11 @@ Page({
     userName: "球友",
     homeSummary: "",
     latestMatch: null,
-    pendingCount: 0
+    pendingCount: 0,
+    sportOptions: SPORT_OPTIONS,
+    homeStats: [],
+    activeStatsSport: "BILLIARDS",
+    activeHomeStat: null
   },
   onShow() {
     enablePageShareMenu();
@@ -75,6 +89,8 @@ Page({
           homeSummary,
           latestMatch: buildLatestMatch(data.items[0]),
           pendingCount,
+          homeStats: me.stats,
+          activeHomeStat: findSportStat(me.stats, this.data.activeStatsSport),
           loggedIn: true,
           ...finishPageRefresh(),
           errorMessage: ""
@@ -126,9 +142,18 @@ Page({
         : "暂时还没有新的球局动态。",
       latestMatch: buildLatestMatch(data.items[0]),
       pendingCount: 0,
+      homeStats: [],
+      activeHomeStat: null,
       loggedIn: false,
       ...finishPageRefresh(),
       errorMessage: hasContent ? "" : ""
+    });
+  },
+  onStatsSportTap(event) {
+    const sportType = event.currentTarget.dataset.sportType;
+    this.setData({
+      activeStatsSport: sportType,
+      activeHomeStat: findSportStat(this.data.homeStats, sportType)
     });
   }
 });

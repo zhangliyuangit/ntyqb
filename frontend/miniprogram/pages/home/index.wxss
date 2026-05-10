@@ -35,13 +35,6 @@
   color: #16212f;
 }
 
-.notice-detail {
-  margin-top: 14rpx;
-  color: #6f7d8c;
-  font-size: 24rpx;
-  line-height: 1.7;
-}
-
 .spotlight {
   padding: 28rpx 30rpx;
   border-radius: 28rpx;
@@ -88,6 +81,32 @@
 .spotlight-time {
   color: #8a95a2;
   font-size: 22rpx;
+}
+
+.home-stats-section {
+  padding: 28rpx 30rpx;
+  border-radius: 28rpx;
+  background: #ffffff;
+  border: 1rpx solid rgba(229, 235, 241, 0.92);
+}
+
+.home-stats-head {
+  margin-bottom: 16rpx;
+}
+
+.home-stats-tabs {
+  margin-bottom: 20rpx;
+}
+
+.home-stats-empty {
+  min-height: 180rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 20rpx;
+  background: #f6f8fa;
+  color: #7b8794;
+  font-size: 24rpx;
 }
 
 .error-title {

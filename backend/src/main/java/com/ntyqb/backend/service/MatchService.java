@@ -368,7 +368,7 @@ public class MatchService {
         if (sets == null || sets.isEmpty() || sets.size() > 3) {
             throw new BadRequestException("羽毛球需要填写 1 到 3 局比分");
         }
-        validateSets(sets, 21, 30);
+        validateSets(sets, 11, 30);
         ensureWinnerMatchesSets(request.winnerSide(), sets);
     }
 
@@ -379,8 +379,8 @@ public class MatchService {
         if (request.participantIdsA().size() != 1 || request.participantIdsB().size() != 1) {
             throw new BadRequestException("乒乓球必须是 1v1");
         }
-        if (request.bestOf() == null || !Set.of(3, 5, 7).contains(request.bestOf())) {
-            throw new BadRequestException("乒乓球 bestOf 仅支持 3、5、7");
+        if (request.bestOf() == null || !Set.of(1, 3, 5, 7).contains(request.bestOf())) {
+            throw new BadRequestException("乒乓球 bestOf 仅支持 1、3、5、7");
         }
         List<MatchDtos.SetScoreDto> sets = request.sets();
         if (sets == null || sets.isEmpty() || sets.size() > request.bestOf()) {

@@ -19,7 +19,6 @@
           <text class="notice-meta">{{pendingCount > 0 ? '你有待确认比赛' : '今日球局公告'}}</text>
         </view>
         <view class="notice-text">我说白了，你有啥实力啊？？？</view>
-        <view class="notice-detail">{{homeSummary}}</view>
       </view>
 
       <view wx:if="{{latestMatch}}" class="spotlight section">
@@ -35,6 +34,26 @@
           <text class="spotlight-detail">{{latestMatch.detailText}}</text>
           <text class="spotlight-time">{{latestMatch.timeText}}</text>
         </view>
+      </view>
+
+      <view wx:if="{{loggedIn}}" class="section home-stats-section">
+        <view class="section-head home-stats-head">
+          <view>
+            <view class="section-title">我的胜率</view>
+            <view class="section-subtitle">按球类切换，只看已确认生效的比赛</view>
+          </view>
+        </view>
+        <view class="pill-tabs home-stats-tabs">
+          <view
+            wx:for="{{sportOptions}}"
+            wx:key="value"
+            class="pill-tab {{activeStatsSport === item.value ? 'active' : ''}}"
+            data-sport-type="{{item.value}}"
+            bindtap="onStatsSportTap"
+          >{{item.label}}</view>
+        </view>
+        <sport-card wx:if="{{activeHomeStat}}" stat="{{activeHomeStat}}" />
+        <view wx:else class="home-stats-empty">这个球类还没有已确认比赛</view>
       </view>
 
       <view class="section">

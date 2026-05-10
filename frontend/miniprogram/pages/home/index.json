@@ -3,6 +3,7 @@
   "enableShareAppMessage": true,
   "enableShareTimeline": true,
   "usingComponents": {
+    "sport-card": "../../components/sport-card/index",
     "match-card": "../../components/match-card/index"
   }
 }

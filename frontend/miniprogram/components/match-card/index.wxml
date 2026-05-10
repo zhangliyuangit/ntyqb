@@ -35,8 +35,14 @@
   </view>
 
   <view wx:if="{{showActions}}" class="actions" catchtap="noop">
-    <button wx:if="{{match.canConfirm}}" class="button-primary action-btn" size="mini" bindtap="onConfirmTap">确认</button>
-    <button wx:if="{{match.canReject}}" class="button-warn action-btn" size="mini" bindtap="onRejectTap">拒绝</button>
-    <button wx:if="{{match.canCancel}}" class="button-ghost action-btn" size="mini" bindtap="onCancelTap">取消</button>
+    <view wx:if="{{match.canConfirm}}" class="action-btn action-btn-confirm" hover-class="action-btn-hover" bindtap="onConfirmTap">
+      <text class="action-btn-label">确认</text>
+    </view>
+    <view wx:if="{{match.canReject}}" class="action-btn action-btn-reject" hover-class="action-btn-hover" bindtap="onRejectTap">
+      <text class="action-btn-label">拒绝</text>
+    </view>
+    <view wx:if="{{match.canCancel}}" class="action-btn action-btn-secondary" hover-class="action-btn-hover" bindtap="onCancelTap">
+      <text class="action-btn-label">取消</text>
+    </view>
   </view>
 </view>
