@@ -1,97 +1,157 @@
 .sport-card {
-  background: linear-gradient(160deg, #ffffff 0%, #f8fffb 100%);
+  background: #ffffff;
   border-radius: 24rpx;
-  padding: 24rpx 22rpx;
-  box-shadow: 0 12rpx 28rpx rgba(7, 193, 96, 0.06);
-  border: 1rpx solid rgba(223, 236, 228, 0.82);
+  padding: 24rpx;
+  border: 1rpx solid rgba(229, 235, 241, 0.92);
+  box-shadow: 0 14rpx 32rpx rgba(28, 43, 58, 0.05);
 }
 
 .header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
+  gap: 18rpx;
   margin-bottom: 18rpx;
 }
 
 .title {
   font-size: 28rpx;
-  font-weight: 600;
-  color: #16212f;
-}
-
-.rate {
-  color: #07c160;
   font-weight: 700;
-  font-size: 34rpx;
+  color: #16212f;
 }
 
 .matches {
   margin-top: 8rpx;
   font-size: 22rpx;
-  color: #7f8b99;
+  color: #7b8794;
 }
 
-.record-line {
+.rate-label {
+  flex-shrink: 0;
+  padding: 8rpx 16rpx;
+  border-radius: 999rpx;
+  background: #eef7f2;
+  color: #16784a;
+  font-size: 22rpx;
+  font-weight: 700;
+}
+
+.rate-panel {
   display: flex;
-  align-items: center;
+  align-items: stretch;
   justify-content: space-between;
-  gap: 16rpx;
-  margin-bottom: 16rpx;
+  gap: 20rpx;
+  padding: 22rpx;
+  border-radius: 20rpx;
+  background: linear-gradient(135deg, #f7faf9 0%, #eef8f2 100%);
+}
+
+.rate-stack {
+  min-width: 210rpx;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.rate {
+  color: #0d8c4a;
+  font-weight: 800;
+  font-size: 48rpx;
+  line-height: 1.05;
+}
+
+.rate-caption {
+  margin-top: 8rpx;
+  color: #758391;
+  font-size: 22rpx;
+}
+
+.record-stack {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  text-align: right;
 }
 
 .record-main {
   color: #16212f;
-  font-size: 28rpx;
-  font-weight: 600;
+  font-size: 30rpx;
+  font-weight: 800;
 }
 
 .record-note {
-  color: #627080;
+  margin-top: 10rpx;
+  color: #657383;
   font-size: 22rpx;
 }
 
-.rate-track {
-  width: 100%;
-  height: 10rpx;
-  border-radius: 999rpx;
-  background: rgba(7, 193, 96, 0.1);
-  overflow: hidden;
-}
-
-.rate-fill {
-  height: 100%;
-  border-radius: inherit;
-  background: linear-gradient(135deg, #07c160 0%, #16a85f 100%);
-}
-
-.meta-list {
+.meta-grid {
   display: flex;
-  flex-direction: column;
   gap: 12rpx;
-  margin-top: 18rpx;
+  margin-top: 16rpx;
 }
 
-.meta-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20rpx;
-  padding-top: 12rpx;
-  border-top: 1rpx solid rgba(231, 236, 240, 0.9);
-}
-
-.meta-row:first-child {
-  padding-top: 0;
-  border-top: none;
+.meta-item {
+  flex: 1;
+  min-width: 0;
+  padding: 16rpx 12rpx;
+  border-radius: 18rpx;
+  background: #f6f8fa;
 }
 
 .meta-label {
-  color: #7f8b99;
-  font-size: 22rpx;
+  display: block;
+  color: #7b8794;
+  font-size: 21rpx;
 }
 
 .meta-value {
+  display: block;
+  margin-top: 8rpx;
   color: #16212f;
-  font-size: 24rpx;
-  font-weight: 600;
+  font-size: 27rpx;
+  line-height: 1.1;
+  font-weight: 800;
+}
+
+.tone-hot .rate-panel {
+  background: linear-gradient(135deg, #effaf3 0%, #e5f7ed 100%);
+}
+
+.tone-hot .rate,
+.tone-hot .rate-label {
+  color: #0b8f4d;
+}
+
+.tone-steady .rate-panel {
+  background: linear-gradient(135deg, #f4faf7 0%, #eef7f3 100%);
+}
+
+.tone-chasing .rate-panel {
+  background: linear-gradient(135deg, #faf8f0 0%, #f7f1e2 100%);
+}
+
+.tone-chasing .rate,
+.tone-chasing .rate-label {
+  color: #9a6a13;
+}
+
+.tone-chasing .rate-label {
+  background: #f8efd8;
+}
+
+.tone-new .rate-panel {
+  background: linear-gradient(135deg, #f7f8fa 0%, #eef1f4 100%);
+}
+
+.tone-new .rate,
+.tone-new .rate-label {
+  color: #607080;
+}
+
+.tone-new .rate-label {
+  background: #eef1f4;
 }

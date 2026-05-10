@@ -17,3 +17,40 @@ test("leaderboard page does not render the guest login CTA copy", () => {
   const leaderboardWxml = read("miniprogram/pages/leaderboard/index.wxml");
   assert.equal(leaderboardWxml.includes("登录后查看球友详情"), false);
 });
+
+test("home win-rate module uses sport tabs and the shared sport card", () => {
+  const homeWxml = read("miniprogram/pages/home/index.wxml");
+  const homeJson = read("miniprogram/pages/home/index.json");
+  const homeTs = read("miniprogram/pages/home/index.ts");
+
+  assert.match(homeWxml, /我的胜率/);
+  assert.match(homeWxml, /onStatsSportTap/);
+  assert.match(homeWxml, /<sport-card wx:if="{{activeHomeStat}}"/);
+  assert.match(homeJson, /"sport-card"/);
+  assert.match(homeTs, /activeStatsSport: "BILLIARDS"/);
+});
+
+test("sport card uses a compact rate panel instead of a progress bar", () => {
+  const sportCardWxml = read("miniprogram/components/sport-card/index.wxml");
+  const sportCardWxss = read("miniprogram/components/sport-card/index.wxss");
+
+  assert.match(sportCardWxml, /rate-panel/);
+  assert.match(sportCardWxml, /rate-label/);
+  assert.equal(sportCardWxml.includes("rate-track"), false);
+  assert.equal(sportCardWxml.includes("rate-fill"), false);
+  assert.equal(sportCardWxss.includes(".rate-track"), false);
+  assert.equal(sportCardWxss.includes(".rate-fill"), false);
+});
+
+test("home broadcast stays compact and user tags use gold styling", () => {
+  const homeWxml = read("miniprogram/pages/home/index.wxml");
+  const homeWxss = read("miniprogram/pages/home/index.wxss");
+  const appWxss = read("miniprogram/app.wxss");
+
+  assert.equal(homeWxml.includes("notice-detail"), false);
+  assert.equal(homeWxss.includes(".notice-detail"), false);
+  assert.equal(appWxss.includes("#fff4d6"), true);
+  assert.equal(appWxss.includes("#8a5a00"), true);
+  assert.equal(appWxss.includes("animation: tag-gold-shine"), true);
+  assert.equal(appWxss.includes("@keyframes tag-gold-shine"), true);
+});

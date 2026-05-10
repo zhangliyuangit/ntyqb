@@ -3,7 +3,6 @@ const {
   confirmMatch,
   createMatch,
   getMe,
-  getRecentPlayers,
   isAuthError,
   isLoggedIn,
   listMatches,
@@ -28,6 +27,13 @@ const STORAGE_KEYS = {
   openCreateOverlay: "records_open_create_overlay"
 };
 
+const QUICK_SCORE_OPTIONS = [
+  { label: "11:8", aScore: 11, bScore: 8 },
+  { label: "11:9", aScore: 11, bScore: 9 },
+  { label: "8:11", aScore: 8, bScore: 11 },
+  { label: "9:11", aScore: 9, bScore: 11 }
+];
+
 Page({
   data: {
     loading: true,
@@ -40,19 +46,21 @@ Page({
     activeSport: "BILLIARDS",
     format: "SINGLES",
     winnerSide: "A",
-    bestOf: 5,
+    bestOf: 1,
     winMarginBalls: "",
     remark: "",
     searchKeyword: "",
     searchResults: [],
-    recentPlayers: [],
+    availablePlayers: [],
+    quickScoreOptions: QUICK_SCORE_OPTIONS,
+    pendingConfirmationCount: 0,
     myUser: null,
     teamA: [],
     teamB: [],
     sets: [
-      { aScore: "", bScore: "" },
       { aScore: "", bScore: "" }
     ],
+    scorePreview: "",
     listScope: "mine",
     listStatus: "",
     matches: []
@@ -69,7 +77,8 @@ Page({
         loggedIn: false,
         myUser: null,
         matches: [],
-        createOverlayVisible: false
+        createOverlayVisible: false,
+        pendingConfirmationCount: 0
       });
       return;
     }
@@ -103,16 +112,16 @@ Page({
     });
     try {
       const presetSport = wx.getStorageSync(STORAGE_KEYS.prefillSport) || this.data.activeSport;
-      const presetScope = wx.getStorageSync(STORAGE_KEYS.defaultScope) || this.data.listScope;
+      const storedScope = wx.getStorageSync(STORAGE_KEYS.defaultScope);
       const presetStatus = wx.getStorageSync(STORAGE_KEYS.defaultStatus) || this.data.listStatus;
       const shouldOpenCreateOverlay = !!wx.getStorageSync(STORAGE_KEYS.openCreateOverlay);
-      const [me, response] = await Promise.all([
-        getMe(),
-        listMatches({
-          scope: presetScope,
-          status: presetStatus
-        })
-      ]);
+      const me = await getMe();
+      const pendingConfirmationCount = me.pendingConfirmations.length;
+      const presetScope = storedScope || (pendingConfirmationCount > 0 ? "pending_confirmation" : this.data.listScope);
+      const response = await listMatches({
+        scope: presetScope,
+        status: presetStatus
+      });
       wx.removeStorageSync(STORAGE_KEYS.prefillSport);
       wx.removeStorageSync(STORAGE_KEYS.defaultScope);
       wx.removeStorageSync(STORAGE_KEYS.defaultStatus);
@@ -122,6 +131,7 @@ Page({
         activeSport: presetSport,
         listScope: presetScope,
         listStatus: presetStatus,
+        pendingConfirmationCount,
         teamA: [me.user],
         matches: response.items,
         ...finishPageRefresh()
@@ -137,7 +147,8 @@ Page({
           pageReady: false,
           loggedIn: false,
           myUser: null,
-          matches: []
+          matches: [],
+          pendingConfirmationCount: 0
         });
         return;
       }
@@ -162,7 +173,7 @@ Page({
     this.resetForm();
     this.setData({ createOverlayVisible: true });
     this.syncTabBarOverlay(true);
-    await this.loadRecentPlayers();
+    await this.loadAvailablePlayers();
   },
   closeCreateOverlay() {
     if (this.data.saving) {
@@ -179,12 +190,12 @@ Page({
     this.syncTabBarOverlay(false);
     this.resetForm();
   },
-  async loadRecentPlayers() {
+  async loadAvailablePlayers() {
     try {
-      const recentPlayers = await getRecentPlayers(this.data.activeSport);
-      this.setData({ recentPlayers });
+      const availablePlayers = await searchUsers("");
+      this.setData({ availablePlayers });
     } catch (error) {
-      this.setData({ recentPlayers: [] });
+      this.setData({ availablePlayers: [] });
     }
   },
   async loadMatches() {
@@ -202,7 +213,8 @@ Page({
           pageReady: false,
           loggedIn: false,
           myUser: null,
-          matches: []
+          matches: [],
+          pendingConfirmationCount: 0
         });
         return;
       }
@@ -216,9 +228,8 @@ Page({
       format: sportType === "BADMINTON" ? this.data.format : "SINGLES",
       winnerSide: "A",
       winMarginBalls: "",
-      bestOf: 5,
+      bestOf: 1,
       sets: [
-        { aScore: "", bScore: "" },
         { aScore: "", bScore: "" }
       ],
       teamB: [],
@@ -226,7 +237,8 @@ Page({
       searchKeyword: "",
       searchResults: []
     });
-    await this.loadRecentPlayers();
+    this.refreshScorePreview();
+    await this.loadAvailablePlayers();
   },
   onFormatTap(event) {
     const format = event.currentTarget.dataset.format;
@@ -236,6 +248,7 @@ Page({
       teamA,
       teamB: []
     });
+    this.refreshScorePreview();
   },
   onWinnerTap(event) {
     this.setData({ winnerSide: event.currentTarget.dataset.side });
@@ -253,6 +266,33 @@ Page({
     const sets = [...this.data.sets];
     sets[index][field] = event.detail.value;
     this.setData({ sets });
+    this.refreshScorePreview();
+  },
+  swapSetScore(event) {
+    const index = Number(event.currentTarget.dataset.index);
+    const sets = [...this.data.sets];
+    const current = sets[index];
+    if (!current) {
+      return;
+    }
+    sets[index] = {
+      aScore: current.bScore,
+      bScore: current.aScore
+    };
+    this.setData({ sets });
+    this.refreshScorePreview();
+  },
+  applyQuickScore(event) {
+    const index = Number(event.currentTarget.dataset.index);
+    const aScore = Number(event.currentTarget.dataset.aScore);
+    const bScore = Number(event.currentTarget.dataset.bScore);
+    const sets = [...this.data.sets];
+    if (!sets[index]) {
+      return;
+    }
+    sets[index] = { aScore, bScore };
+    this.setData({ sets });
+    this.refreshScorePreview();
   },
   addSet() {
     const limit = this.data.activeSport === "TABLE_TENNIS" ? this.data.bestOf : 3;
@@ -262,6 +302,7 @@ Page({
     this.setData({
       sets: [...this.data.sets, { aScore: "", bScore: "" }]
     });
+    this.refreshScorePreview();
   },
   removeSet() {
     if (this.data.sets.length <= 1) {
@@ -270,6 +311,7 @@ Page({
     this.setData({
       sets: this.data.sets.slice(0, -1)
     });
+    this.refreshScorePreview();
   },
   async onSearchConfirm() {
     if (!this.data.searchKeyword.trim()) {
@@ -283,20 +325,15 @@ Page({
       wx.showToast({ title: "搜索失败", icon: "none" });
     }
   },
-  chooseRecent(event) {
-    const player = this.data.recentPlayers.find((item) => item.id === Number(event.currentTarget.dataset.playerId));
+  chooseSearchResult(event) {
+    const player = this.data.searchResults.find((item) => item.id === Number(event.currentTarget.dataset.playerId));
     if (!player) {
       return;
     }
-    this.applyPlayer({
-      id: player.id,
-      nickname: player.nickname,
-      avatarUrl: player.avatarUrl,
-      tag: player.tag
-    });
+    this.applyPlayer(player);
   },
-  chooseSearchResult(event) {
-    const player = this.data.searchResults.find((item) => item.id === Number(event.currentTarget.dataset.playerId));
+  chooseAvailablePlayer(event) {
+    const player = this.data.availablePlayers.find((item) => item.id === Number(event.currentTarget.dataset.playerId));
     if (!player) {
       return;
     }
@@ -309,11 +346,13 @@ Page({
       this.setData({
         teamA: this.data.teamA.filter((item) => item.id !== userId)
       });
+      this.refreshScorePreview();
       return;
     }
     this.setData({
       teamB: this.data.teamB.filter((item) => item.id !== userId)
     });
+    this.refreshScorePreview();
   },
   async submitMatch() {
     try {
@@ -383,11 +422,13 @@ Page({
     if (teamA.length < aLimit) {
       teamA.push(player);
       this.setData({ teamA });
+      this.refreshScorePreview();
       return;
     }
     if (teamB.length < bLimit) {
       teamB.push(player);
       this.setData({ teamB });
+      this.refreshScorePreview();
       return;
     }
     wx.showToast({ title: "参赛人数已满", icon: "none" });
@@ -457,22 +498,61 @@ Page({
       remark: this.data.remark
     };
   },
+  buildTeamName(players, fallback) {
+    const names = players
+      .map((item) => item.nickname)
+      .filter(Boolean);
+    return names.length ? names.join("、") : fallback;
+  },
+  refreshScorePreview() {
+    if (this.data.activeSport === "BILLIARDS") {
+      this.setData({ scorePreview: "" });
+      return;
+    }
+    const teamAName = this.buildTeamName(this.data.teamA, "我方");
+    const teamBName = this.buildTeamName(this.data.teamB, "对方");
+    const completedSets = this.data.sets
+      .filter((item) => item.aScore !== "" && item.bScore !== "");
+    if (!completedSets.length) {
+      this.setData({ scorePreview: `${teamAName} vs ${teamBName}` });
+      return;
+    }
+    let aWins = 0;
+    let bWins = 0;
+    const scoreLine = completedSets
+      .map((item) => {
+        const aScore = Number(item.aScore);
+        const bScore = Number(item.bScore);
+        if (aScore > bScore) {
+          aWins += 1;
+        } else if (bScore > aScore) {
+          bWins += 1;
+        }
+        return `${aScore}:${bScore}`;
+      })
+      .join(" / ");
+    const winnerName = aWins === bWins ? "胜负未定" : aWins > bWins ? teamAName : teamBName;
+    this.setData({
+      scorePreview: `${winnerName} ${aWins}:${bWins} · ${teamAName} vs ${teamBName} · ${scoreLine}`
+    });
+  },
   resetForm() {
     this.setData({
       format: this.data.activeSport === "BADMINTON" ? this.data.format : "SINGLES",
       winnerSide: "A",
-      bestOf: 5,
+      bestOf: 1,
       winMarginBalls: "",
       remark: "",
       teamA: this.data.myUser ? [this.data.myUser] : [],
       teamB: [],
       searchKeyword: "",
       searchResults: [],
-      recentPlayers: [],
+      availablePlayers: [],
       sets: [
-        { aScore: "", bScore: "" },
         { aScore: "", bScore: "" }
-      ]
+      ],
+      scorePreview: ""
     });
+    this.refreshScorePreview();
   }
 });

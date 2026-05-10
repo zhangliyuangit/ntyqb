@@ -125,6 +125,71 @@ class ApplicationApiTests {
     }
 
     @Test
+    void shouldAllowBadmintonGameEndingAtElevenPoints() throws Exception {
+        String demoToken = login("local-demo-user", "阿北", "https://example.com/avatar-demo.png");
+        String zhouToken = login("user-zhou", "周周", "https://example.com/avatar-zhou.png");
+        long demoUserId = currentUserId(demoToken);
+        long zhouUserId = currentUserId(zhouToken);
+
+        String createBody = """
+                {
+                  "sportType":"BADMINTON",
+                  "format":"SINGLES",
+                  "winnerSide":"A",
+                  "participantIdsA":[%d],
+                  "participantIdsB":[%d],
+                  "sets":[
+                    {"aScore":11,"bScore":9}
+                  ],
+                  "remark":"十一分制测试"
+                }
+                """.formatted(demoUserId, zhouUserId);
+
+        mockMvc.perform(post("/api/matches")
+                        .header("X-Auth-Token", demoToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(createBody))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.sportType").value("BADMINTON"))
+                .andExpect(jsonPath("$.detail.sets[0].aScore").value(11))
+                .andExpect(jsonPath("$.detail.sets[0].bScore").value(9))
+                .andExpect(jsonPath("$.status").value("PENDING"));
+    }
+
+    @Test
+    void shouldAllowTableTennisSingleGameMatch() throws Exception {
+        String demoToken = login("local-demo-user", "阿北", "https://example.com/avatar-demo.png");
+        String zhouToken = login("user-zhou", "周周", "https://example.com/avatar-zhou.png");
+        long demoUserId = currentUserId(demoToken);
+        long zhouUserId = currentUserId(zhouToken);
+
+        String createBody = """
+                {
+                  "sportType":"TABLE_TENNIS",
+                  "format":"SINGLES",
+                  "winnerSide":"A",
+                  "participantIdsA":[%d],
+                  "participantIdsB":[%d],
+                  "bestOf":1,
+                  "sets":[
+                    {"aScore":11,"bScore":8}
+                  ],
+                  "remark":"一局定胜负"
+                }
+                """.formatted(demoUserId, zhouUserId);
+
+        mockMvc.perform(post("/api/matches")
+                        .header("X-Auth-Token", demoToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(createBody))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.sportType").value("TABLE_TENNIS"))
+                .andExpect(jsonPath("$.detail.bestOf").value(1))
+                .andExpect(jsonPath("$.detail.sets.length()").value(1))
+                .andExpect(jsonPath("$.status").value("PENDING"));
+    }
+
+    @Test
     void shouldRejectPendingMatch() throws Exception {
         String demoToken = login("local-demo-user", "阿北", "https://example.com/avatar-demo.png");
 

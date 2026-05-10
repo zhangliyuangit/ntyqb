@@ -31,7 +31,7 @@ app:
       api-base-url: https://api.weixin.qq.com
   user-tags:
     by-id:
-      1: VIP
+      1: 高手
   seed:
     enabled: true
   upload:

@@ -1,29 +1,34 @@
-<view class="sport-card">
+<view class="sport-card tone-{{rateTone}}">
   <view class="header">
     <view>
       <text class="title">{{title}}</text>
-      <view class="matches">{{stat.matches}} 场已生效比赛</view>
+      <view class="matches">{{stat.matches}} 场已确认</view>
     </view>
-    <text class="rate">{{rateText}}</text>
+    <text class="rate-label">{{rateLabel}}</text>
   </view>
-  <view class="record-line">
-    <text class="record-main">{{stat.wins}} 胜 {{stat.losses}} 负</text>
-    <text class="record-note">连胜 {{stat.streak}}</text>
+
+  <view class="rate-panel">
+    <view class="rate-stack">
+      <text class="rate">{{rateText}}</text>
+      <text class="rate-caption">胜率</text>
+    </view>
+    <view class="record-stack">
+      <view class="record-main">{{stat.wins}} 胜 {{stat.losses}} 负</view>
+      <view class="record-note">当前连胜 {{stat.streak}}</view>
+    </view>
   </view>
-  <view class="rate-track">
-    <view class="rate-fill" style="width: {{rateText}}"></view>
-  </view>
-  <view class="meta-list">
-    <view class="meta-row">
+
+  <view class="meta-grid">
+    <view class="meta-item">
       <text class="meta-label">积分</text>
       <text class="meta-value">{{stat.rankingPoints}}</text>
     </view>
-    <view class="meta-row">
+    <view class="meta-item">
       <text class="meta-label">净胜</text>
       <text class="meta-value">{{stat.netValue}}</text>
     </view>
-    <view class="meta-row">
-      <text class="meta-label">最近 10 场胜</text>
+    <view class="meta-item">
+      <text class="meta-label">近 10 胜</text>
       <text class="meta-value">{{stat.recentTenWins}}</text>
     </view>
   </view>

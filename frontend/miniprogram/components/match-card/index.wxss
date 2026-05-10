@@ -134,12 +134,50 @@
   display: flex;
   justify-content: flex-end;
   gap: 12rpx;
-  margin-top: 18rpx;
+  margin-top: 20rpx;
+  flex-wrap: wrap;
 }
 
 .action-btn {
   margin: 0;
-  min-width: 108rpx;
+  min-width: 132rpx;
+  height: 72rpx;
+  padding: 0 30rpx;
+  border-radius: 999rpx;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  box-shadow: none;
+}
+
+.action-btn-confirm {
+  background: linear-gradient(135deg, #16a34a 0%, #07c160 100%);
+  color: #ffffff;
+}
+
+.action-btn-reject {
+  background: #fff3f0;
+  color: #c2412d;
+  border: 1rpx solid rgba(217, 119, 87, 0.28);
+}
+
+.action-btn-secondary {
+  background: #f4f7fa;
+  color: #536273;
+  border: 1rpx solid rgba(205, 214, 224, 0.9);
+}
+
+.action-btn-hover {
+  transform: translateY(1rpx);
+  opacity: 0.92;
+}
+
+.action-btn-label {
+  font-size: 24rpx;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
 }
 
 .match-card.compact {
