@@ -21,6 +21,14 @@
         <view class="notice-text">我说白了，你有啥实力啊？？？</view>
       </view>
 
+      <view wx:if="{{loggedIn}}" class="assistant-entry section" bindtap="openAssistant">
+        <view class="assistant-entry-main">
+          <view class="assistant-entry-title">记录助手</view>
+          <view class="assistant-entry-subtitle">一句话添加或查询球局</view>
+        </view>
+        <view class="assistant-entry-action">开始</view>
+      </view>
+
       <view wx:if="{{loggedIn}}" class="section home-stats-section">
         <view class="section-head home-stats-head">
           <view>
@@ -54,4 +62,52 @@
       </view>
     </view>
   </block>
+
+  <view wx:if="{{assistantVisible}}" class="assistant-overlay" catchtouchmove="noop">
+    <view class="assistant-mask" bindtap="closeAssistant"></view>
+    <view class="assistant-sheet" catchtap="noop">
+      <view class="assistant-sheet-handle"></view>
+      <view class="assistant-sheet-head">
+        <view>
+          <view class="assistant-sheet-title">记录助手</view>
+          <view class="assistant-sheet-subtitle">可以帮你添加比赛、查询战绩、查看待确认</view>
+        </view>
+        <view class="assistant-close" bindtap="closeAssistant">关闭</view>
+      </view>
+
+      <scroll-view scroll-y class="assistant-message-list">
+        <view
+          wx:for="{{assistantMessages}}"
+          wx:key="id"
+          class="assistant-message {{item.role === 'user' ? 'user' : 'assistant'}}"
+        >
+          <view class="assistant-bubble">{{item.content}}</view>
+        </view>
+        <view class="assistant-suggestions">
+          <view
+            wx:for="{{assistantSuggestions}}"
+            wx:key="*this"
+            class="assistant-suggestion"
+            data-text="{{item}}"
+            bindtap="useAssistantSuggestion"
+          >{{item}}</view>
+        </view>
+      </scroll-view>
+
+      <view class="assistant-input-bar">
+        <input
+          class="assistant-input"
+          value="{{assistantInput}}"
+          placeholder="比如：我今天台球赢了张三，净胜 3 球"
+          placeholder-class="field-placeholder"
+          confirm-type="send"
+          bindinput="onAssistantInput"
+          bindconfirm="sendAssistantMessage"
+        />
+        <view class="assistant-send {{assistantSending ? 'disabled' : ''}}" bindtap="sendAssistantMessage">
+          {{assistantSending ? '发送中' : '发送'}}
+        </view>
+      </view>
+    </view>
+  </view>
 </view>

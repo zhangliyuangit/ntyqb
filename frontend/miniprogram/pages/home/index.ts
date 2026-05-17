@@ -10,6 +10,12 @@ const SPORT_OPTIONS = [
   { value: "TABLE_TENNIS", label: "🏓 乒乓球" }
 ];
 
+const ASSISTANT_SUGGESTIONS = [
+  "我今天台球赢了张三，净胜 3 球",
+  "查我最近的台球记录",
+  "我有哪些待确认？"
+];
+
 function findSportStat(stats: SportStat[], sportType: SportType) {
   return stats.find((item) => item.sportType === sportType) || null;
 }
@@ -28,7 +34,19 @@ Page({
     sportOptions: SPORT_OPTIONS,
     homeStats: [],
     activeStatsSport: "BILLIARDS",
-    activeHomeStat: null
+    activeHomeStat: null,
+    assistantVisible: false,
+    assistantInput: "",
+    assistantSending: false,
+    assistantSuggestions: ASSISTANT_SUGGESTIONS,
+    assistantMessages: [
+      {
+        id: "welcome",
+        role: "assistant",
+        content: "可以帮你添加比赛、查询战绩、查看待确认。"
+      }
+    ],
+    assistantDraftAction: null
   },
   onShow() {
     enablePageShareMenu();
@@ -109,6 +127,52 @@ Page({
   retryLoad() {
     this.loadPage();
   },
+  openAssistant() {
+    if (!this.data.loggedIn) {
+      return;
+    }
+    this.setData({ assistantVisible: true });
+  },
+  closeAssistant() {
+    if (this.data.assistantSending) {
+      return;
+    }
+    this.setData({
+      assistantVisible: false,
+      assistantInput: "",
+      assistantDraftAction: null
+    });
+  },
+  onAssistantInput(event: WechatMiniprogram.Input) {
+    this.setData({ assistantInput: event.detail.value });
+  },
+  useAssistantSuggestion(event: WechatMiniprogram.BaseEvent) {
+    const text = event.currentTarget.dataset.text || "";
+    this.setData({ assistantInput: text });
+  },
+  sendAssistantMessage() {
+    const content = `${this.data.assistantInput || ""}`.trim();
+    if (!content || this.data.assistantSending) {
+      return;
+    }
+    const nextMessages = [
+      ...(this.data.assistantMessages as Array<{ id: string; role: string; content: string }>),
+      {
+        id: `user-${Date.now()}`,
+        role: "user",
+        content
+      },
+      {
+        id: `assistant-${Date.now()}`,
+        role: "assistant",
+        content: "第一版先把入口和浮层搭好，接下来会接入后端记录助手。"
+      }
+    ];
+    this.setData({
+      assistantInput: "",
+      assistantMessages: nextMessages
+    });
+  },
   async loadPublicHome(hasContent: boolean) {
     const data = await listMatches(
       {
@@ -139,5 +203,7 @@ Page({
       activeStatsSport: sportType,
       activeHomeStat: findSportStat(this.data.homeStats as SportStat[], sportType)
     });
+  },
+  noop() {
   }
 });
