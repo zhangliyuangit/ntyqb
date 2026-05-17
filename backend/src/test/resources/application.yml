@@ -18,3 +18,5 @@ app:
     enabled: true
   upload:
     root-dir: ./target/test-uploads
+  assistant:
+    enabled: false

@@ -39,11 +39,21 @@ public class AssistantActionStore {
     }
 
     public Optional<StoredAction> consume(String id, Long userId) {
-        StoredAction action = actions.remove(id);
-        if (action == null || !action.userId().equals(userId) || action.expiresAt().isBefore(Instant.now(clock))) {
+        StoredAction action = actions.get(id);
+        if (action == null) {
             return Optional.empty();
         }
-        return Optional.of(action);
+        if (action.expiresAt().isBefore(Instant.now(clock))) {
+            actions.remove(id, action);
+            return Optional.empty();
+        }
+        if (!action.userId().equals(userId)) {
+            return Optional.empty();
+        }
+        if (actions.remove(id, action)) {
+            return Optional.of(action);
+        }
+        return Optional.empty();
     }
 
     public record StoredAction(
