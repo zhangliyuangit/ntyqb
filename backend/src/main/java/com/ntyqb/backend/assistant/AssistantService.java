@@ -9,19 +9,26 @@ import io.agentscope.core.message.Msg;
 import io.agentscope.core.model.DashScopeChatModel;
 import io.agentscope.core.tool.ToolExecutionContext;
 import io.agentscope.core.tool.Toolkit;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
 
 @Service
 public class AssistantService {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(AssistantService.class);
+    private static final Duration MODEL_TIMEOUT = Duration.ofSeconds(20);
+
     private final AssistantProperties properties;
     private final AssistantActionStore actionStore;
     private final MatchService matchService;
     private final MatchAssistantTools matchAssistantTools;
     private final AssistantPromptFactory promptFactory;
+    private final Toolkit toolkit;
 
     public AssistantService(
             AssistantProperties properties,
@@ -35,6 +42,8 @@ public class AssistantService {
         this.matchService = matchService;
         this.matchAssistantTools = matchAssistantTools;
         this.promptFactory = promptFactory;
+        this.toolkit = new Toolkit();
+        this.toolkit.registerTool(matchAssistantTools);
     }
 
     public AssistantDtos.ChatResponse chat(AssistantDtos.ChatRequest request, User currentUser) {
@@ -66,27 +75,35 @@ public class AssistantService {
                     List.of()
             );
         }
-        Toolkit toolkit = new Toolkit();
-        toolkit.registerTool(matchAssistantTools);
-        ToolExecutionContext context = ToolExecutionContext.builder()
-                .register(userContext(currentUser))
-                .build();
-        ReActAgent agent = ReActAgent.builder()
-                .name("NtyqbAssistant")
-                .sysPrompt(promptFactory.systemPrompt())
-                .model(DashScopeChatModel.builder()
-                        .apiKey(properties.getApiKey())
-                        .modelName(properties.getModelName())
-                        .build())
-                .toolkit(toolkit)
-                .toolExecutionContext(context)
-                .maxIters(6)
-                .build();
-        Msg response = agent.call(Msg.builder().textContent(message).build()).block();
-        String reply = response == null || response.getTextContent() == null
-                ? "刚刚没听清，可以换个说法再试一次"
-                : response.getTextContent();
-        return new AssistantDtos.ChatResponse(conversationId, reply, null, List.of());
+        try {
+            ToolExecutionContext context = ToolExecutionContext.builder()
+                    .register(userContext(currentUser))
+                    .build();
+            ReActAgent agent = ReActAgent.builder()
+                    .name("NtyqbAssistant")
+                    .sysPrompt(promptFactory.systemPrompt())
+                    .model(DashScopeChatModel.builder()
+                            .apiKey(properties.getApiKey())
+                            .modelName(properties.getModelName())
+                            .build())
+                    .toolkit(toolkit)
+                    .toolExecutionContext(context)
+                    .maxIters(6)
+                    .build();
+            Msg response = agent.call(Msg.builder().textContent(message).build()).block(MODEL_TIMEOUT);
+            String reply = response == null || response.getTextContent() == null
+                    ? "刚刚没听清，可以换个说法再试一次"
+                    : response.getTextContent();
+            return new AssistantDtos.ChatResponse(conversationId, reply, null, List.of());
+        } catch (Exception exception) {
+            LOGGER.warn("Assistant model call failed", exception);
+            return new AssistantDtos.ChatResponse(
+                    conversationId,
+                    "记录助手暂时不可用，可以稍后再试",
+                    null,
+                    List.of()
+            );
+        }
     }
 
     public AssistantDtos.ConfirmActionResponse confirmAction(String actionId, User currentUser) {
