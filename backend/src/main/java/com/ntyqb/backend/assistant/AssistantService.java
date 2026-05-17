@@ -18,6 +18,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -60,6 +62,7 @@ public class AssistantService {
                 : request.conversationId();
         String message = request.message() == null ? "" : request.message().trim();
         if ("DRAFT_CREATE_BILLIARDS".equals(message) && request.draft() != null) {
+            validateCreateMatchDraft(request.draft(), currentUser);
             String summary = buildCreateMatchSummary(request.draft(), currentUser);
             String actionId = actionStore.putCreateMatch(currentUser.getId(), request.draft(), summary);
             return new AssistantDtos.ChatResponse(
@@ -145,13 +148,8 @@ public class AssistantService {
     }
 
     private String buildCreateMatchSummary(MatchDtos.CreateMatchRequest draft, User currentUser) {
-        validateCreateMatchDraft(draft);
         if (draft.sportType() == SportType.BILLIARDS) {
-            String opponentName = draft.participantIdsB().stream()
-                    .findFirst()
-                    .flatMap(userRepository::findById)
-                    .map(User::getNickname)
-                    .orElse("对手");
+            String opponentName = loadDraftOpponent(draft).getNickname();
             String winnerName = draft.winnerSide() == TeamSide.A ? currentUser.getNickname() : opponentName;
             return "台球 单打：%s vs %s，%s胜，净胜 %d 球".formatted(
                     currentUser.getNickname(),
@@ -163,19 +161,45 @@ public class AssistantService {
         return "比赛记录";
     }
 
-    private void validateCreateMatchDraft(MatchDtos.CreateMatchRequest draft) {
-        if (draft.sportType() == null
-                || draft.format() == null
-                || draft.winnerSide() == null
-                || draft.participantIdsA() == null
-                || draft.participantIdsA().isEmpty()
-                || draft.participantIdsB() == null
-                || draft.participantIdsB().isEmpty()) {
+    private void validateCreateMatchDraft(MatchDtos.CreateMatchRequest draft, User currentUser) {
+        if (draft.sportType() != SportType.BILLIARDS) {
+            throw new BadRequestException("当前仅支持台球草稿");
+        }
+        if (draft.format() != MatchFormat.SINGLES) {
+            throw new BadRequestException("台球仅支持单打");
+        }
+        if (draft.winnerSide() == null) {
             throw new BadRequestException("比赛草稿信息不完整");
         }
-        if (draft.sportType() == SportType.BILLIARDS
-                && (draft.format() != MatchFormat.SINGLES || draft.winMarginBalls() == null)) {
-            throw new BadRequestException("台球草稿信息不完整");
+        if (draft.participantIdsA() == null || draft.participantIdsA().isEmpty()
+                || draft.participantIdsB() == null || draft.participantIdsB().isEmpty()) {
+            throw new BadRequestException("双方参赛者不能为空");
         }
+        if (!draft.participantIdsA().contains(currentUser.getId())) {
+            throw new BadRequestException("发起人必须在我方");
+        }
+        if (draft.participantIdsA().size() != 1 || draft.participantIdsB().size() != 1) {
+            throw new BadRequestException("台球必须是 1v1");
+        }
+
+        List<Long> allIds = new ArrayList<>();
+        allIds.addAll(draft.participantIdsA());
+        allIds.addAll(draft.participantIdsB());
+        if (new LinkedHashSet<>(allIds).size() != allIds.size()) {
+            throw new BadRequestException("参赛者不能重复");
+        }
+        if (draft.winMarginBalls() == null || draft.winMarginBalls() < 0) {
+            throw new BadRequestException("台球必须填写净胜球数，可为 0");
+        }
+        loadDraftOpponent(draft);
+    }
+
+    private User loadDraftOpponent(MatchDtos.CreateMatchRequest draft) {
+        Long opponentId = draft.participantIdsB().get(0);
+        if (opponentId == null) {
+            throw new BadRequestException("存在未注册的球友，无法发起记录");
+        }
+        return userRepository.findById(opponentId)
+                .orElseThrow(() -> new BadRequestException("存在未注册的球友，无法发起记录"));
     }
 }

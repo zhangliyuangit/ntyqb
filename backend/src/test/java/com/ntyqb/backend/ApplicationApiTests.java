@@ -531,6 +531,100 @@ class ApplicationApiTests {
     }
 
     @Test
+    void shouldRejectAssistantDraftWhenCurrentUserIsNotSideA() throws Exception {
+        String demoToken = login("assistant-demo-user", "阿北", "https://example.com/avatar-demo.png");
+        String zhouToken = login("assistant-user-zhou", "周周", "https://example.com/avatar-zhou.png");
+        long demoUserId = currentUserId(demoToken);
+        long zhouUserId = currentUserId(zhouToken);
+
+        String draftBody = """
+                {
+                  "message":"DRAFT_CREATE_BILLIARDS",
+                  "draft":{
+                    "sportType":"BILLIARDS",
+                    "format":"SINGLES",
+                    "winnerSide":"A",
+                    "participantIdsA":[%d],
+                    "participantIdsB":[%d],
+                    "winMarginBalls":3
+                  }
+                }
+                """.formatted(zhouUserId, demoUserId);
+
+        mockMvc.perform(post("/api/assistant/chat")
+                        .header("X-Auth-Token", demoToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(draftBody))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("发起人必须在我方"));
+    }
+
+    @Test
+    void shouldRejectAssistantDraftWithMissingOpponent() throws Exception {
+        String demoToken = login("assistant-demo-user", "阿北", "https://example.com/avatar-demo.png");
+        long demoUserId = currentUserId(demoToken);
+
+        String draftBody = """
+                {
+                  "message":"DRAFT_CREATE_BILLIARDS",
+                  "draft":{
+                    "sportType":"BILLIARDS",
+                    "format":"SINGLES",
+                    "winnerSide":"A",
+                    "participantIdsA":[%d],
+                    "participantIdsB":[999999],
+                    "winMarginBalls":3
+                  }
+                }
+                """.formatted(demoUserId);
+
+        mockMvc.perform(post("/api/assistant/chat")
+                        .header("X-Auth-Token", demoToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(draftBody))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("存在未注册的球友，无法发起记录"));
+    }
+
+    @Test
+    void shouldRejectAssistantActionConfirmationFromDifferentUser() throws Exception {
+        String demoToken = login("assistant-demo-user", "阿北", "https://example.com/avatar-demo.png");
+        String zhouToken = login("assistant-user-zhou", "周周", "https://example.com/avatar-zhou.png");
+        long demoUserId = currentUserId(demoToken);
+        long zhouUserId = currentUserId(zhouToken);
+
+        String draftBody = """
+                {
+                  "message":"DRAFT_CREATE_BILLIARDS",
+                  "draft":{
+                    "sportType":"BILLIARDS",
+                    "format":"SINGLES",
+                    "winnerSide":"A",
+                    "participantIdsA":[%d],
+                    "participantIdsB":[%d],
+                    "winMarginBalls":3
+                  }
+                }
+                """.formatted(demoUserId, zhouUserId);
+
+        String draftResponse = mockMvc.perform(post("/api/assistant/chat")
+                        .header("X-Auth-Token", demoToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(draftBody))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        String actionId = objectMapper.readTree(draftResponse).path("pendingAction").path("id").asText();
+
+        mockMvc.perform(post("/api/assistant/actions/" + actionId + "/confirm")
+                        .header("X-Auth-Token", zhouToken))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("待确认动作已过期，请重新描述一次"));
+    }
+
+    @Test
     void shouldRejectMissingAssistantAction() throws Exception {
         String token = login("assistant-user", "小助", "https://example.com/avatar-assistant.png");
 
