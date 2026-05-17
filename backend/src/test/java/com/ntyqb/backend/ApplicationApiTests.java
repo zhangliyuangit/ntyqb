@@ -490,6 +490,47 @@ class ApplicationApiTests {
     }
 
     @Test
+    void shouldCreateBilliardsDraftAndConfirmThroughAssistant() throws Exception {
+        String demoToken = login("assistant-demo-user", "阿北", "https://example.com/avatar-demo.png");
+        String zhouToken = login("assistant-user-zhou", "周周", "https://example.com/avatar-zhou.png");
+        long demoUserId = currentUserId(demoToken);
+        long zhouUserId = currentUserId(zhouToken);
+
+        String draftBody = """
+                {
+                  "message":"DRAFT_CREATE_BILLIARDS",
+                  "draft":{
+                    "sportType":"BILLIARDS",
+                    "format":"SINGLES",
+                    "winnerSide":"A",
+                    "participantIdsA":[%d],
+                    "participantIdsB":[%d],
+                    "winMarginBalls":3
+                  }
+                }
+                """.formatted(demoUserId, zhouUserId);
+
+        String draftResponse = mockMvc.perform(post("/api/assistant/chat")
+                        .header("X-Auth-Token", demoToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(draftBody))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.pendingAction.type").value("CREATE_MATCH"))
+                .andExpect(jsonPath("$.pendingAction.summary").value("台球 单打：阿北 vs 周周，阿北胜，净胜 3 球"))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        String actionId = objectMapper.readTree(draftResponse).path("pendingAction").path("id").asText();
+
+        mockMvc.perform(post("/api/assistant/actions/" + actionId + "/confirm")
+                        .header("X-Auth-Token", demoToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.match.status").value("PENDING"))
+                .andExpect(jsonPath("$.match.detail.winMarginBalls").value(3));
+    }
+
+    @Test
     void shouldRejectMissingAssistantAction() throws Exception {
         String token = login("assistant-user", "小助", "https://example.com/avatar-assistant.png");
 

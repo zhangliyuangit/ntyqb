@@ -1,8 +1,12 @@
 package com.ntyqb.backend.assistant;
 
+import com.ntyqb.backend.dto.MatchDtos;
+import com.ntyqb.backend.entity.MatchFormat;
 import com.ntyqb.backend.entity.SportType;
+import com.ntyqb.backend.entity.TeamSide;
 import com.ntyqb.backend.entity.User;
 import com.ntyqb.backend.exception.BadRequestException;
+import com.ntyqb.backend.repository.UserRepository;
 import com.ntyqb.backend.service.MatchService;
 import io.agentscope.core.ReActAgent;
 import io.agentscope.core.message.Msg;
@@ -15,6 +19,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -28,6 +33,7 @@ public class AssistantService {
     private final MatchService matchService;
     private final MatchAssistantTools matchAssistantTools;
     private final AssistantPromptFactory promptFactory;
+    private final UserRepository userRepository;
     private final Toolkit toolkit;
 
     public AssistantService(
@@ -35,13 +41,15 @@ public class AssistantService {
             AssistantActionStore actionStore,
             MatchService matchService,
             MatchAssistantTools matchAssistantTools,
-            AssistantPromptFactory promptFactory
+            AssistantPromptFactory promptFactory,
+            UserRepository userRepository
     ) {
         this.properties = properties;
         this.actionStore = actionStore;
         this.matchService = matchService;
         this.matchAssistantTools = matchAssistantTools;
         this.promptFactory = promptFactory;
+        this.userRepository = userRepository;
         this.toolkit = new Toolkit();
         this.toolkit.registerTool(matchAssistantTools);
     }
@@ -51,6 +59,20 @@ public class AssistantService {
                 ? UUID.randomUUID().toString()
                 : request.conversationId();
         String message = request.message() == null ? "" : request.message().trim();
+        if ("DRAFT_CREATE_BILLIARDS".equals(message) && request.draft() != null) {
+            String summary = buildCreateMatchSummary(request.draft(), currentUser);
+            String actionId = actionStore.putCreateMatch(currentUser.getId(), request.draft(), summary);
+            return new AssistantDtos.ChatResponse(
+                    conversationId,
+                    "我识别到一场比赛记录，请确认后创建。",
+                    new AssistantDtos.PendingActionDto(actionId, "CREATE_MATCH", summary, Map.of(
+                            "sportType", request.draft().sportType(),
+                            "format", request.draft().format(),
+                            "winnerSide", request.draft().winnerSide()
+                    )),
+                    List.of()
+            );
+        }
         if (message.contains("待确认")) {
             return new AssistantDtos.ChatResponse(
                     conversationId,
@@ -120,5 +142,40 @@ public class AssistantService {
 
     private MatchAssistantTools.AssistantUserContext userContext(User currentUser) {
         return new MatchAssistantTools.AssistantUserContext(currentUser.getId());
+    }
+
+    private String buildCreateMatchSummary(MatchDtos.CreateMatchRequest draft, User currentUser) {
+        validateCreateMatchDraft(draft);
+        if (draft.sportType() == SportType.BILLIARDS) {
+            String opponentName = draft.participantIdsB().stream()
+                    .findFirst()
+                    .flatMap(userRepository::findById)
+                    .map(User::getNickname)
+                    .orElse("对手");
+            String winnerName = draft.winnerSide() == TeamSide.A ? currentUser.getNickname() : opponentName;
+            return "台球 单打：%s vs %s，%s胜，净胜 %d 球".formatted(
+                    currentUser.getNickname(),
+                    opponentName,
+                    winnerName,
+                    draft.winMarginBalls()
+            );
+        }
+        return "比赛记录";
+    }
+
+    private void validateCreateMatchDraft(MatchDtos.CreateMatchRequest draft) {
+        if (draft.sportType() == null
+                || draft.format() == null
+                || draft.winnerSide() == null
+                || draft.participantIdsA() == null
+                || draft.participantIdsA().isEmpty()
+                || draft.participantIdsB() == null
+                || draft.participantIdsB().isEmpty()) {
+            throw new BadRequestException("比赛草稿信息不完整");
+        }
+        if (draft.sportType() == SportType.BILLIARDS
+                && (draft.format() != MatchFormat.SINGLES || draft.winMarginBalls() == null)) {
+            throw new BadRequestException("台球草稿信息不完整");
+        }
     }
 }

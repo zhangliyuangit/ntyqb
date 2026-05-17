@@ -12,7 +12,8 @@ public final class AssistantDtos {
 
     public record ChatRequest(
             String conversationId,
-            String message
+            String message,
+            MatchDtos.CreateMatchRequest draft
     ) {
     }
 
