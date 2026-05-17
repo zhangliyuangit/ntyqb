@@ -7,6 +7,14 @@ function read(relativePath) {
   return fs.readFileSync(path.join(__dirname, "..", relativePath), "utf8");
 }
 
+function methodSource(source, methodName, nextMethodName) {
+  const start = source.indexOf(`${methodName}(`);
+  assert.notEqual(start, -1, `should define ${methodName}`);
+  const end = source.indexOf(`${nextMethodName}(`, start);
+  assert.notEqual(end, -1, `should define ${nextMethodName} after ${methodName}`);
+  return source.slice(start, end);
+}
+
 test("home page renders assistant entry only for logged-in users", () => {
   const wxml = read("miniprogram/pages/home/index.wxml");
 
@@ -72,26 +80,79 @@ test("home page assistant styles include sheet and entry classes", () => {
 });
 
 test("assistant api wrappers are exported", () => {
-  const source = read("miniprogram/services/api.ts");
   const models = read("miniprogram/types/models.ts");
 
-  assert.equal(source.includes("sendAssistantMessage"), true);
-  assert.equal(source.includes('url: "/assistant/chat"'), true);
-  assert.equal(source.includes("confirmAssistantAction"), true);
-  assert.equal(source.includes("`/assistant/actions/${actionId}/confirm`"), true);
+  for (const sourcePath of [
+    "miniprogram/services/api.ts",
+    "miniprogram/services/api.js"
+  ]) {
+    const source = read(sourcePath);
+
+    assert.equal(source.includes("sendAssistantMessage"), true, `${sourcePath} should export sendAssistantMessage`);
+    assert.equal(source.includes('url: "/assistant/chat"'), true, `${sourcePath} should post assistant chat`);
+    assert.equal(source.includes("confirmAssistantAction"), true, `${sourcePath} should export confirmAssistantAction`);
+    assert.equal(
+      source.includes("`/assistant/actions/${actionId}/confirm`"),
+      true,
+      `${sourcePath} should post assistant action confirmations`
+    );
+  }
   assert.equal(models.includes("AssistantChatRequest"), true);
   assert.equal(models.includes("AssistantChatResponse"), true);
   assert.equal(models.includes("AssistantPendingAction"), true);
 });
 
 test("home page uses assistant api and renders pending action confirmation", () => {
-  const source = read("miniprogram/pages/home/index.ts");
   const wxml = read("miniprogram/pages/home/index.wxml");
 
-  assert.equal(source.includes("sendAssistantMessage as sendAssistantChatMessage"), true);
-  assert.equal(source.includes("confirmAssistantAction"), true);
-  assert.equal(source.includes("assistantConversationId"), true);
-  assert.equal(source.includes("assistantDraftAction: response.pendingAction || null"), true);
+  for (const sourcePath of [
+    "miniprogram/pages/home/index.ts",
+    "miniprogram/pages/home/index.js"
+  ]) {
+    const source = read(sourcePath);
+
+    assert.equal(source.includes("sendAssistantChatMessage"), true, `${sourcePath} should alias assistant chat API`);
+    assert.equal(source.includes("confirmAssistantAction"), true, `${sourcePath} should import confirmAssistantAction`);
+    assert.equal(source.includes("assistantConversationId"), true, `${sourcePath} should track conversation ID`);
+    assert.equal(
+      source.includes("assistantDraftAction: response.pendingAction || null"),
+      true,
+      `${sourcePath} should store pending actions from assistant responses`
+    );
+    assert.equal(source.includes("confirmAssistantDraftAction()"), true, `${sourcePath} should confirm draft actions`);
+  }
   assert.equal(wxml.includes('wx:if="{{assistantDraftAction}}"'), true);
   assert.equal(wxml.includes('bindtap="confirmAssistantDraftAction"'), true);
+});
+
+test("home page close keeps pending assistant draft actions", () => {
+  for (const sourcePath of [
+    "miniprogram/pages/home/index.ts",
+    "miniprogram/pages/home/index.js"
+  ]) {
+    const source = read(sourcePath);
+    const closeSource = methodSource(source, "closeAssistant", "onAssistantInput");
+
+    assert.equal(
+      closeSource.includes("assistantDraftAction: null"),
+      false,
+      `${sourcePath} should not clear draft actions on close`
+    );
+  }
+});
+
+test("home page assistant auth errors refresh public state", () => {
+  for (const sourcePath of [
+    "miniprogram/pages/home/index.ts",
+    "miniprogram/pages/home/index.js"
+  ]) {
+    const source = read(sourcePath);
+    const sendSource = methodSource(source, "sendAssistantMessage", "confirmAssistantDraftAction");
+    const confirmSource = methodSource(source, "confirmAssistantDraftAction", "loadPublicHome");
+
+    assert.equal(sendSource.includes("isAuthError(error)"), true, `${sourcePath} send should detect auth errors`);
+    assert.equal(sendSource.includes("await this.loadPage()"), true, `${sourcePath} send should refresh on auth errors`);
+    assert.equal(confirmSource.includes("isAuthError(error)"), true, `${sourcePath} confirm should detect auth errors`);
+    assert.equal(confirmSource.includes("await this.loadPage()"), true, `${sourcePath} confirm should refresh on auth errors`);
+  }
 });

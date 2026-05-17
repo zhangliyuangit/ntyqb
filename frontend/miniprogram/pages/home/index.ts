@@ -147,8 +147,7 @@ Page({
     }
     this.setData({
       assistantVisible: false,
-      assistantInput: "",
-      assistantDraftAction: null
+      assistantInput: ""
     });
   },
   onAssistantInput(event: WechatMiniprogram.Input) {
@@ -193,6 +192,20 @@ Page({
         ]
       });
     } catch (error: any) {
+      if (isAuthError(error)) {
+        this.setData({
+          assistantMessages: [
+            ...(this.data.assistantMessages as Array<{ id: string; role: string; content: string }>),
+            {
+              id: `assistant-auth-error-${Date.now()}`,
+              role: "assistant",
+              content: error?.message || "请先登录后使用该功能"
+            }
+          ]
+        });
+        await this.loadPage();
+        return;
+      }
       this.setData({
         assistantMessages: [
           ...(this.data.assistantMessages as Array<{ id: string; role: string; content: string }>),
@@ -228,6 +241,11 @@ Page({
       });
       await this.loadPage();
     } catch (error: any) {
+      if (isAuthError(error)) {
+        wx.showToast({ title: error?.message || "请先登录后使用该功能", icon: "none" });
+        await this.loadPage();
+        return;
+      }
       wx.showToast({ title: error?.message || "确认失败", icon: "none" });
     } finally {
       this.setData({ assistantSending: false });

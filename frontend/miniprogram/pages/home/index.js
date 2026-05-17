@@ -146,8 +146,7 @@ Page({
     }
     this.setData({
       assistantVisible: false,
-      assistantInput: "",
-      assistantDraftAction: null
+      assistantInput: ""
     });
   },
   onAssistantInput(event) {
@@ -191,6 +190,20 @@ Page({
         ]
       });
     } catch (error) {
+      if (isAuthError(error)) {
+        this.setData({
+          assistantMessages: [
+            ...this.data.assistantMessages,
+            {
+              id: `assistant-auth-error-${Date.now()}`,
+              role: "assistant",
+              content: error && error.message ? error.message : "请先登录后使用该功能"
+            }
+          ]
+        });
+        await this.loadPage();
+        return;
+      }
       this.setData({
         assistantMessages: [
           ...this.data.assistantMessages,
@@ -226,6 +239,14 @@ Page({
       });
       await this.loadPage();
     } catch (error) {
+      if (isAuthError(error)) {
+        wx.showToast({
+          title: error && error.message ? error.message : "请先登录后使用该功能",
+          icon: "none"
+        });
+        await this.loadPage();
+        return;
+      }
       wx.showToast({
         title: error && error.message ? error.message : "确认失败",
         icon: "none"
