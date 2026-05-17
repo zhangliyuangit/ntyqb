@@ -37,3 +37,8 @@ app:
   upload:
     root-dir: ./data/uploads
     public-base-url: https://niyoushashilia.cloud
+  assistant:
+    enabled: true
+    model-provider: dashscope
+    model-name: qwen-max
+    api-key: ${ASSISTANT_MODEL_API_KEY:}

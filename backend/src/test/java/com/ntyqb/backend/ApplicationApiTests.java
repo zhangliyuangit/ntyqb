@@ -440,6 +440,39 @@ class ApplicationApiTests {
                 .andExpect(jsonPath("$.user.avatarUrl").value("https://example.com/avatar-stable.png"));
     }
 
+    @Test
+    void shouldRequireLoginForAssistantChat() throws Exception {
+        mockMvc.perform(post("/api/assistant/chat")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"message\":\"你好\"}"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void shouldReturnAssistantUnavailableWhenModelIsNotConfigured() throws Exception {
+        String token = login("assistant-user", "小助", "https://example.com/avatar-assistant.png");
+
+        mockMvc.perform(post("/api/assistant/chat")
+                        .header("X-Auth-Token", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"message\":\"你好\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.conversationId", notNullValue()))
+                .andExpect(jsonPath("$.reply").value("记录助手暂未开启"))
+                .andExpect(jsonPath("$.pendingAction").doesNotExist())
+                .andExpect(jsonPath("$.results").isArray());
+    }
+
+    @Test
+    void shouldRejectMissingAssistantAction() throws Exception {
+        String token = login("assistant-user", "小助", "https://example.com/avatar-assistant.png");
+
+        mockMvc.perform(post("/api/assistant/actions/missing-action/confirm")
+                        .header("X-Auth-Token", token))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("待确认动作已过期，请重新描述一次"));
+    }
+
     private String login(String mockUserKey, String nickname, String avatarUrl) throws Exception {
         String response = mockMvc.perform(post("/api/auth/wechat/login")
                         .contentType(MediaType.APPLICATION_JSON)
