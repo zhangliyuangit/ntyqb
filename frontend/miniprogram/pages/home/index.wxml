@@ -63,7 +63,7 @@
     </view>
   </block>
 
-  <view wx:if="{{assistantVisible}}" class="assistant-overlay" catchtouchmove="noop">
+  <view wx:if="{{loggedIn && assistantVisible}}" class="assistant-overlay" catchtouchmove="noop">
     <view class="assistant-mask" bindtap="closeAssistant"></view>
     <view class="assistant-sheet" catchtap="noop">
       <view class="assistant-sheet-handle"></view>

@@ -193,6 +193,9 @@ Page({
       homeStats: [],
       activeHomeStat: null,
       loggedIn: false,
+      assistantVisible: false,
+      assistantInput: "",
+      assistantDraftAction: null,
       ...finishPageRefresh(),
       errorMessage: hasContent ? "" : ""
     });

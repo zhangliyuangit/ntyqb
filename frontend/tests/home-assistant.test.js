@@ -19,7 +19,7 @@ test("home page renders assistant entry only for logged-in users", () => {
 test("home page assistant bottom sheet has chat structure", () => {
   const wxml = read("miniprogram/pages/home/index.wxml");
 
-  assert.equal(wxml.includes('wx:if="{{assistantVisible}}" class="assistant-overlay"'), true);
+  assert.equal(wxml.includes('wx:if="{{loggedIn && assistantVisible}}" class="assistant-overlay"'), true);
   assert.equal(wxml.includes('class="assistant-sheet"'), true);
   assert.equal(wxml.includes('wx:for="{{assistantMessages}}"'), true);
   assert.equal(wxml.includes('value="{{assistantInput}}"'), true);
@@ -28,15 +28,36 @@ test("home page assistant bottom sheet has chat structure", () => {
 });
 
 test("home page assistant state and handlers are defined", () => {
-  const source = read("miniprogram/pages/home/index.ts");
+  for (const sourcePath of [
+    "miniprogram/pages/home/index.ts",
+    "miniprogram/pages/home/index.js"
+  ]) {
+    const source = read(sourcePath);
 
-  assert.equal(source.includes("assistantVisible: false"), true);
-  assert.equal(source.includes("assistantMessages:"), true);
-  assert.equal(source.includes("assistantSuggestions:"), true);
-  assert.equal(source.includes("openAssistant()"), true);
-  assert.equal(source.includes("closeAssistant()"), true);
-  assert.equal(source.includes("onAssistantInput"), true);
-  assert.equal(source.includes("sendAssistantMessage"), true);
+    assert.equal(source.includes("assistantVisible: false"), true, `${sourcePath} should initialize assistantVisible`);
+    assert.equal(source.includes("assistantMessages:"), true, `${sourcePath} should initialize assistantMessages`);
+    assert.equal(source.includes("assistantSuggestions:"), true, `${sourcePath} should initialize assistantSuggestions`);
+    assert.equal(source.includes("openAssistant()"), true, `${sourcePath} should define openAssistant`);
+    assert.equal(source.includes("closeAssistant()"), true, `${sourcePath} should define closeAssistant`);
+    assert.equal(source.includes("onAssistantInput"), true, `${sourcePath} should define onAssistantInput`);
+    assert.equal(source.includes("sendAssistantMessage"), true, `${sourcePath} should define sendAssistantMessage`);
+  }
+});
+
+test("home page assistant resets when falling back to public mode", () => {
+  for (const sourcePath of [
+    "miniprogram/pages/home/index.ts",
+    "miniprogram/pages/home/index.js"
+  ]) {
+    const source = read(sourcePath);
+    const publicHomeStart = source.indexOf("async loadPublicHome");
+    assert.notEqual(publicHomeStart, -1, `${sourcePath} should define loadPublicHome`);
+    const publicHomeSource = source.slice(publicHomeStart);
+
+    assert.equal(publicHomeSource.includes("assistantVisible: false"), true, `${sourcePath} should hide assistant in public mode`);
+    assert.equal(publicHomeSource.includes('assistantInput: ""'), true, `${sourcePath} should clear assistant input in public mode`);
+    assert.equal(publicHomeSource.includes("assistantDraftAction: null"), true, `${sourcePath} should clear assistant action in public mode`);
+  }
 });
 
 test("home page assistant styles include sheet and entry classes", () => {
@@ -47,4 +68,5 @@ test("home page assistant styles include sheet and entry classes", () => {
   assert.equal(wxss.includes(".assistant-sheet"), true);
   assert.equal(wxss.includes("height: 78vh"), true);
   assert.equal(wxss.includes(".assistant-input-bar"), true);
+  assert.equal(wxss.includes(".field-placeholder"), true);
 });
