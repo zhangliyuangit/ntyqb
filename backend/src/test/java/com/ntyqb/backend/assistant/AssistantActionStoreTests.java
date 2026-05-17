@@ -29,11 +29,12 @@ class AssistantActionStoreTests {
         MutableClock clock = new MutableClock(Instant.parse("2026-05-17T10:00:00Z"));
         AssistantActionStore store = new AssistantActionStore(clock);
         String actionId = store.putCreateMatch(1L, null, "创建比赛");
+        assertThat(store.contains(actionId)).isTrue();
 
         clock.advance(Duration.ofSeconds(601));
 
         assertThat(store.consume(actionId, 1L)).isEmpty();
-        assertThat(store.consume(actionId, 1L)).isEmpty();
+        assertThat(store.contains(actionId)).isFalse();
     }
 
     private static final class MutableClock extends Clock {

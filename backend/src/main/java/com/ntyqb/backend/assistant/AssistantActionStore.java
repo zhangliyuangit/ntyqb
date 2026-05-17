@@ -26,6 +26,10 @@ public class AssistantActionStore {
         this.clock = clock;
     }
 
+    boolean contains(String id) {
+        return actions.containsKey(id);
+    }
+
     public String putCreateMatch(Long userId, MatchDtos.CreateMatchRequest payload, String summary) {
         String id = UUID.randomUUID().toString();
         actions.put(id, new StoredAction(
