@@ -70,3 +70,28 @@ test("home page assistant styles include sheet and entry classes", () => {
   assert.equal(wxss.includes(".assistant-input-bar"), true);
   assert.equal(wxss.includes(".field-placeholder"), true);
 });
+
+test("assistant api wrappers are exported", () => {
+  const source = read("miniprogram/services/api.ts");
+  const models = read("miniprogram/types/models.ts");
+
+  assert.equal(source.includes("sendAssistantMessage"), true);
+  assert.equal(source.includes('url: "/assistant/chat"'), true);
+  assert.equal(source.includes("confirmAssistantAction"), true);
+  assert.equal(source.includes("`/assistant/actions/${actionId}/confirm`"), true);
+  assert.equal(models.includes("AssistantChatRequest"), true);
+  assert.equal(models.includes("AssistantChatResponse"), true);
+  assert.equal(models.includes("AssistantPendingAction"), true);
+});
+
+test("home page uses assistant api and renders pending action confirmation", () => {
+  const source = read("miniprogram/pages/home/index.ts");
+  const wxml = read("miniprogram/pages/home/index.wxml");
+
+  assert.equal(source.includes("sendAssistantMessage as sendAssistantChatMessage"), true);
+  assert.equal(source.includes("confirmAssistantAction"), true);
+  assert.equal(source.includes("assistantConversationId"), true);
+  assert.equal(source.includes("assistantDraftAction: response.pendingAction || null"), true);
+  assert.equal(wxml.includes('wx:if="{{assistantDraftAction}}"'), true);
+  assert.equal(wxml.includes('bindtap="confirmAssistantDraftAction"'), true);
+});

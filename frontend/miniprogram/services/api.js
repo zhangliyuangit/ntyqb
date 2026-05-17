@@ -215,6 +215,21 @@ async function listMatches(params, options = {}) {
   });
 }
 
+async function sendAssistantMessage(requestPayload) {
+  return request({
+    method: "POST",
+    url: "/assistant/chat",
+    data: requestPayload
+  });
+}
+
+async function confirmAssistantAction(actionId) {
+  return request({
+    method: "POST",
+    url: `/assistant/actions/${actionId}/confirm`
+  });
+}
+
 async function confirmMatch(matchId) {
   return request({ method: "POST", url: `/matches/${matchId}/confirm` });
 }
@@ -414,6 +429,8 @@ module.exports = {
   getLeaderboard,
   createMatch,
   listMatches,
+  sendAssistantMessage,
+  confirmAssistantAction,
   confirmMatch,
   rejectMatch,
   cancelMatch,

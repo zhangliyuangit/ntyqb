@@ -1,4 +1,11 @@
-import { getMe, isAuthError, isLoggedIn, listMatches } from "../../services/api";
+import {
+  confirmAssistantAction,
+  getMe,
+  isAuthError,
+  isLoggedIn,
+  listMatches,
+  sendAssistantMessage as sendAssistantChatMessage
+} from "../../services/api";
 import { syncTabBarSelection } from "../../custom-tab-bar/state";
 import { beginPageRefresh, failPageRefresh, finishPageRefresh } from "../../utils/page-refresh-state";
 import { buildShareAppMessage, buildShareTimeline, enablePageShareMenu } from "../../utils/share";
@@ -38,6 +45,7 @@ Page({
     assistantVisible: false,
     assistantInput: "",
     assistantSending: false,
+    assistantConversationId: "",
     assistantSuggestions: ASSISTANT_SUGGESTIONS,
     assistantMessages: [
       {
@@ -150,28 +158,80 @@ Page({
     const text = event.currentTarget.dataset.text || "";
     this.setData({ assistantInput: text });
   },
-  sendAssistantMessage() {
+  async sendAssistantMessage() {
     const content = `${this.data.assistantInput || ""}`.trim();
     if (!content || this.data.assistantSending) {
       return;
     }
-    const nextMessages = [
-      ...(this.data.assistantMessages as Array<{ id: string; role: string; content: string }>),
-      {
-        id: `user-${Date.now()}`,
-        role: "user",
-        content
-      },
-      {
-        id: `assistant-${Date.now()}`,
-        role: "assistant",
-        content: "第一版先把入口和浮层搭好，接下来会接入后端记录助手。"
-      }
-    ];
+    const userMessage = {
+      id: `user-${Date.now()}`,
+      role: "user",
+      content
+    };
+    const currentMessages = this.data.assistantMessages as Array<{ id: string; role: string; content: string }>;
     this.setData({
       assistantInput: "",
-      assistantMessages: nextMessages
+      assistantSending: true,
+      assistantDraftAction: null,
+      assistantMessages: [...currentMessages, userMessage]
     });
+    try {
+      const response = await sendAssistantChatMessage({
+        conversationId: this.data.assistantConversationId || undefined,
+        message: content
+      });
+      this.setData({
+        assistantConversationId: response.conversationId,
+        assistantDraftAction: response.pendingAction || null,
+        assistantMessages: [
+          ...(this.data.assistantMessages as Array<{ id: string; role: string; content: string }>),
+          {
+            id: `assistant-${Date.now()}`,
+            role: "assistant",
+            content: response.reply
+          }
+        ]
+      });
+    } catch (error: any) {
+      this.setData({
+        assistantMessages: [
+          ...(this.data.assistantMessages as Array<{ id: string; role: string; content: string }>),
+          {
+            id: `assistant-error-${Date.now()}`,
+            role: "assistant",
+            content: error?.message || "刚刚没听清，可以换个说法再试一次"
+          }
+        ]
+      });
+    } finally {
+      this.setData({ assistantSending: false });
+    }
+  },
+  async confirmAssistantDraftAction() {
+    const action = this.data.assistantDraftAction as { id: string } | null;
+    if (!action || this.data.assistantSending) {
+      return;
+    }
+    this.setData({ assistantSending: true });
+    try {
+      const response = await confirmAssistantAction(action.id);
+      this.setData({
+        assistantDraftAction: null,
+        assistantMessages: [
+          ...(this.data.assistantMessages as Array<{ id: string; role: string; content: string }>),
+          {
+            id: `assistant-confirm-${Date.now()}`,
+            role: "assistant",
+            content: response.reply
+          }
+        ]
+      });
+      await this.loadPage();
+    } catch (error: any) {
+      wx.showToast({ title: error?.message || "确认失败", icon: "none" });
+    } finally {
+      this.setData({ assistantSending: false });
+    }
   },
   async loadPublicHome(hasContent: boolean) {
     const data = await listMatches(
@@ -195,6 +255,7 @@ Page({
       loggedIn: false,
       assistantVisible: false,
       assistantInput: "",
+      assistantConversationId: "",
       assistantDraftAction: null,
       ...finishPageRefresh(),
       errorMessage: hasContent ? "" : ""

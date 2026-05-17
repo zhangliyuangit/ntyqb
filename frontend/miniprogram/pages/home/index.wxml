@@ -83,6 +83,13 @@
         >
           <view class="assistant-bubble">{{item.content}}</view>
         </view>
+        <view wx:if="{{assistantDraftAction}}" class="assistant-action-card">
+          <view class="assistant-action-title">请确认这条记录</view>
+          <view class="assistant-action-summary">{{assistantDraftAction.summary}}</view>
+          <view class="assistant-action-confirm" bindtap="confirmAssistantDraftAction">
+            {{assistantSending ? '确认中' : '确认创建'}}
+          </view>
+        </view>
         <view class="assistant-suggestions">
           <view
             wx:for="{{assistantSuggestions}}"

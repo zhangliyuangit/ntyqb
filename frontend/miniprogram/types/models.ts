@@ -121,3 +121,34 @@ export interface CreateMatchPayload {
   sets?: Array<{ aScore: number; bScore: number }>;
   remark?: string;
 }
+
+export interface AssistantChatRequest {
+  conversationId?: string;
+  message: string;
+}
+
+export interface AssistantPendingAction {
+  id: string;
+  type: "CREATE_MATCH";
+  summary: string;
+  payload: Record<string, any>;
+}
+
+export interface AssistantResult {
+  type: string;
+  title: string;
+  subtitle?: string;
+  matchId?: number;
+}
+
+export interface AssistantChatResponse {
+  conversationId: string;
+  reply: string;
+  pendingAction?: AssistantPendingAction;
+  results: AssistantResult[];
+}
+
+export interface AssistantConfirmActionResponse {
+  reply: string;
+  match?: MatchDetail;
+}

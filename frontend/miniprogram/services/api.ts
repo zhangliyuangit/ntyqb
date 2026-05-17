@@ -1,4 +1,7 @@
 import type {
+  AssistantChatRequest,
+  AssistantChatResponse,
+  AssistantConfirmActionResponse,
   CreateMatchPayload,
   LeaderboardResponse,
   MatchDetail,
@@ -265,6 +268,21 @@ export async function listMatches(
   return request<MatchListResponse>({
     url: `/matches${query ? `?${query}` : ""}`,
     needAuth: options.needAuth ?? true
+  });
+}
+
+export async function sendAssistantMessage(requestPayload: AssistantChatRequest): Promise<AssistantChatResponse> {
+  return request<AssistantChatResponse>({
+    method: "POST",
+    url: "/assistant/chat",
+    data: requestPayload
+  });
+}
+
+export async function confirmAssistantAction(actionId: string): Promise<AssistantConfirmActionResponse> {
+  return request<AssistantConfirmActionResponse>({
+    method: "POST",
+    url: `/assistant/actions/${actionId}/confirm`
   });
 }
 

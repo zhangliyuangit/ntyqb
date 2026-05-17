@@ -1,4 +1,11 @@
-const { getMe, isAuthError, isLoggedIn, listMatches } = require("../../services/api");
+const {
+  confirmAssistantAction,
+  getMe,
+  isAuthError,
+  isLoggedIn,
+  listMatches,
+  sendAssistantMessage: sendAssistantChatMessage
+} = require("../../services/api");
 const { syncTabBarSelection } = require("../../custom-tab-bar/state");
 const { beginPageRefresh, failPageRefresh, finishPageRefresh } = require("../../utils/page-refresh-state");
 const { buildShareAppMessage, buildShareTimeline, enablePageShareMenu } = require("../../utils/share");
@@ -37,6 +44,7 @@ Page({
     assistantVisible: false,
     assistantInput: "",
     assistantSending: false,
+    assistantConversationId: "",
     assistantSuggestions: ASSISTANT_SUGGESTIONS,
     assistantMessages: [
       {
@@ -149,28 +157,82 @@ Page({
     const text = event.currentTarget.dataset.text || "";
     this.setData({ assistantInput: text });
   },
-  sendAssistantMessage() {
+  async sendAssistantMessage() {
     const content = `${this.data.assistantInput || ""}`.trim();
     if (!content || this.data.assistantSending) {
       return;
     }
-    const nextMessages = [
-      ...this.data.assistantMessages,
-      {
-        id: `user-${Date.now()}`,
-        role: "user",
-        content
-      },
-      {
-        id: `assistant-${Date.now()}`,
-        role: "assistant",
-        content: "第一版先把入口和浮层搭好，接下来会接入后端记录助手。"
-      }
-    ];
+    const userMessage = {
+      id: `user-${Date.now()}`,
+      role: "user",
+      content
+    };
     this.setData({
       assistantInput: "",
-      assistantMessages: nextMessages
+      assistantSending: true,
+      assistantDraftAction: null,
+      assistantMessages: [...this.data.assistantMessages, userMessage]
     });
+    try {
+      const response = await sendAssistantChatMessage({
+        conversationId: this.data.assistantConversationId || undefined,
+        message: content
+      });
+      this.setData({
+        assistantConversationId: response.conversationId,
+        assistantDraftAction: response.pendingAction || null,
+        assistantMessages: [
+          ...this.data.assistantMessages,
+          {
+            id: `assistant-${Date.now()}`,
+            role: "assistant",
+            content: response.reply
+          }
+        ]
+      });
+    } catch (error) {
+      this.setData({
+        assistantMessages: [
+          ...this.data.assistantMessages,
+          {
+            id: `assistant-error-${Date.now()}`,
+            role: "assistant",
+            content: error && error.message ? error.message : "刚刚没听清，可以换个说法再试一次"
+          }
+        ]
+      });
+    } finally {
+      this.setData({ assistantSending: false });
+    }
+  },
+  async confirmAssistantDraftAction() {
+    const action = this.data.assistantDraftAction;
+    if (!action || this.data.assistantSending) {
+      return;
+    }
+    this.setData({ assistantSending: true });
+    try {
+      const response = await confirmAssistantAction(action.id);
+      this.setData({
+        assistantDraftAction: null,
+        assistantMessages: [
+          ...this.data.assistantMessages,
+          {
+            id: `assistant-confirm-${Date.now()}`,
+            role: "assistant",
+            content: response.reply
+          }
+        ]
+      });
+      await this.loadPage();
+    } catch (error) {
+      wx.showToast({
+        title: error && error.message ? error.message : "确认失败",
+        icon: "none"
+      });
+    } finally {
+      this.setData({ assistantSending: false });
+    }
   },
   async loadPublicHome(hasContent) {
     const data = await listMatches(
@@ -194,6 +256,7 @@ Page({
       loggedIn: false,
       assistantVisible: false,
       assistantInput: "",
+      assistantConversationId: "",
       assistantDraftAction: null,
       ...finishPageRefresh(),
       errorMessage: hasContent ? "" : ""
