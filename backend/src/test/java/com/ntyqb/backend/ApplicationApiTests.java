@@ -464,6 +464,32 @@ class ApplicationApiTests {
     }
 
     @Test
+    void shouldListPendingConfirmationsThroughAssistantTools() throws Exception {
+        String token = login("local-demo-user", "阿北", "https://example.com/avatar-demo.png");
+
+        mockMvc.perform(post("/api/assistant/chat")
+                        .header("X-Auth-Token", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"message\":\"我有哪些待确认？\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.reply").value("下面是你待确认的比赛。"))
+                .andExpect(jsonPath("$.results").isArray());
+    }
+
+    @Test
+    void shouldListRecentBilliardsMatchesThroughAssistantTools() throws Exception {
+        String token = login("local-demo-user", "阿北", "https://example.com/avatar-demo.png");
+
+        mockMvc.perform(post("/api/assistant/chat")
+                        .header("X-Auth-Token", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"message\":\"查我最近的台球记录\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.reply").value("下面是你最近的台球记录。"))
+                .andExpect(jsonPath("$.results").isArray());
+    }
+
+    @Test
     void shouldRejectMissingAssistantAction() throws Exception {
         String token = login("assistant-user", "小助", "https://example.com/avatar-assistant.png");
 
