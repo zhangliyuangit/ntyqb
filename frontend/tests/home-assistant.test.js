@@ -56,8 +56,25 @@ test("home page assistant state and handlers are defined", () => {
     assert.equal(source.includes("assistantSuggestions:"), true, `${sourcePath} should initialize assistantSuggestions`);
     assert.equal(source.includes("openAssistant()"), true, `${sourcePath} should define openAssistant`);
     assert.equal(source.includes("closeAssistant()"), true, `${sourcePath} should define closeAssistant`);
+    assert.equal(source.includes("syncAssistantOverlay"), true, `${sourcePath} should sync assistant overlay with tabbar`);
     assert.equal(source.includes("onAssistantInput"), true, `${sourcePath} should define onAssistantInput`);
     assert.equal(source.includes("sendAssistantMessage"), true, `${sourcePath} should define sendAssistantMessage`);
+  }
+});
+
+test("home page assistant hides the custom tabbar while open", () => {
+  for (const sourcePath of [
+    "miniprogram/pages/home/index.ts",
+    "miniprogram/pages/home/index.js"
+  ]) {
+    const source = read(sourcePath);
+    const openSource = methodSource(source, "openAssistant", "closeAssistant");
+    const closeSource = methodSource(source, "closeAssistant", "onAssistantInput");
+    const syncSource = methodSource(source, "syncAssistantOverlay", "onAssistantInput");
+
+    assert.equal(openSource.includes("this.syncAssistantOverlay(true)"), true, `${sourcePath} should hide tabbar on open`);
+    assert.equal(closeSource.includes("this.syncAssistantOverlay(false)"), true, `${sourcePath} should show tabbar on close`);
+    assert.equal(syncSource.includes("overlayVisible: visible"), true, `${sourcePath} should pass overlay state to tabbar`);
   }
 });
 

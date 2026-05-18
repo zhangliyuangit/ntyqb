@@ -57,7 +57,7 @@ Page({
   },
   onShow() {
     enablePageShareMenu();
-    syncTabBarSelection(this, "pages/home/index");
+    this.syncAssistantOverlay(this.data.assistantVisible);
     this.loadPage();
   },
   onShareAppMessage() {
@@ -139,6 +139,7 @@ Page({
       return;
     }
     this.setData({ assistantVisible: true });
+    this.syncAssistantOverlay(true);
   },
   closeAssistant() {
     if (this.data.assistantSending) {
@@ -148,6 +149,10 @@ Page({
       assistantVisible: false,
       assistantInput: ""
     });
+    this.syncAssistantOverlay(false);
+  },
+  syncAssistantOverlay(visible) {
+    syncTabBarSelection(this, "pages/home/index", { overlayVisible: visible });
   },
   onAssistantInput(event) {
     this.setData({ assistantInput: event.detail.value });
@@ -282,6 +287,7 @@ Page({
       ...finishPageRefresh(),
       errorMessage: hasContent ? "" : ""
     });
+    this.syncAssistantOverlay(false);
   },
   onStatsSportTap(event) {
     const sportType = event.currentTarget.dataset.sportType;
