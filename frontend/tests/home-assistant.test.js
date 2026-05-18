@@ -15,6 +15,14 @@ function methodSource(source, methodName, nextMethodName) {
   return source.slice(start, end);
 }
 
+function cssBlock(source, selector, nextSelector) {
+  const start = source.indexOf(selector);
+  assert.notEqual(start, -1, `should define ${selector}`);
+  const end = source.indexOf(nextSelector, start + selector.length);
+  assert.notEqual(end, -1, `should define ${nextSelector} after ${selector}`);
+  return source.slice(start, end);
+}
+
 test("home page renders assistant entry only for logged-in users", () => {
   const wxml = read("miniprogram/pages/home/index.wxml");
 
@@ -29,6 +37,7 @@ test("home page assistant bottom sheet has chat structure", () => {
 
   assert.equal(wxml.includes('wx:if="{{loggedIn && assistantVisible}}" class="assistant-overlay"'), true);
   assert.equal(wxml.includes('class="assistant-sheet"'), true);
+  assert.equal(wxml.includes('class="assistant-sheet" catchtap="noop"'), false);
   assert.equal(wxml.includes('wx:for="{{assistantMessages}}"'), true);
   assert.equal(wxml.includes('value="{{assistantInput}}"'), true);
   assert.equal(wxml.includes('bindtap="sendAssistantMessage"'), true);
@@ -70,12 +79,15 @@ test("home page assistant resets when falling back to public mode", () => {
 
 test("home page assistant styles include sheet and entry classes", () => {
   const wxss = read("miniprogram/pages/home/index.wxss");
+  const inputBarStyle = cssBlock(wxss, ".assistant-input-bar", ".assistant-input");
 
   assert.equal(wxss.includes(".assistant-entry"), true);
   assert.equal(wxss.includes(".assistant-overlay"), true);
   assert.equal(wxss.includes(".assistant-sheet"), true);
   assert.equal(wxss.includes("height: 78vh"), true);
   assert.equal(wxss.includes(".assistant-input-bar"), true);
+  assert.equal(inputBarStyle.includes("position: absolute"), false);
+  assert.equal(inputBarStyle.includes("flex: 0 0 auto"), true);
   assert.equal(wxss.includes(".field-placeholder"), true);
 });
 
